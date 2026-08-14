@@ -9,7 +9,9 @@
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt --target firefox",
-    "build": "wxt build",
+    "build": "vite build packages/web",
+    "build:ext": "wxt build",
+    "build:extension": "wxt build",
     "build:firefox": "wxt build --target firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip --target firefox",
