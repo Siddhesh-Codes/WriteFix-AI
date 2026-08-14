@@ -52,11 +52,11 @@ export default defineContentScript({
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
-        background: #cbd5e1;
+        background: rgba(236, 232, 222, 0.16);
         border-radius: 4px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #94a3b8;
+        background: rgba(236, 232, 222, 0.28);
       }
     `;
     shadowRoot.appendChild(styleEl);

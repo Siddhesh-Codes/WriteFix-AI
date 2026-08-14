@@ -15,6 +15,7 @@ export interface ThemeColors {
   cardBg: string;
   inputBg: string;
   inputBorder: string;
+  accent: string;
 }
 
 export function getEffectiveTheme(theme: ThemeMode = 'system'): 'dark' | 'light' {
@@ -23,7 +24,7 @@ export function getEffectiveTheme(theme: ThemeMode = 'system'): 'dark' | 'light'
   if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     return 'dark';
   }
-  return 'light';
+  return 'dark'; // Default to dark warm editorial
 }
 
 export function getThemeColors(theme: ThemeMode = 'system'): ThemeColors {
@@ -32,29 +33,31 @@ export function getThemeColors(theme: ThemeMode = 'system'): ThemeColors {
   if (isDark) {
     return {
       isDark: true,
-      bgPrimary: '#0f172a',
-      bgSecondary: '#1e293b',
-      bgTertiary: '#334155',
-      border: '#334155',
-      textPrimary: '#f8fafc',
-      textSecondary: '#94a3b8',
-      cardBg: '#1e293b',
-      inputBg: '#334155',
-      inputBorder: '#475569',
+      bgPrimary: '#15171B',
+      bgSecondary: '#1C1F24',
+      bgTertiary: '#23262C',
+      border: 'rgba(236, 232, 222, 0.12)',
+      textPrimary: '#ECE8DE',
+      textSecondary: '#8B8F96',
+      cardBg: '#1C1F24',
+      inputBg: '#23262C',
+      inputBorder: 'rgba(236, 232, 222, 0.18)',
+      accent: '#B08D4F',
     };
   }
 
   return {
     isDark: false,
-    bgPrimary: '#f8fafc',
-    bgSecondary: '#ffffff',
-    bgTertiary: '#f1f5f9',
-    border: '#e2e8f0',
-    textPrimary: '#0f172a',
-    textSecondary: '#64748b',
-    cardBg: '#ffffff',
-    inputBg: '#ffffff',
-    inputBorder: '#cbd5e1',
+    bgPrimary: '#F6F4EE',
+    bgSecondary: '#FFFFFF',
+    bgTertiary: '#ECE8DE',
+    border: '#D8D3C5',
+    textPrimary: '#15171B',
+    textSecondary: '#5C6068',
+    cardBg: '#FFFFFF',
+    inputBg: '#FFFFFF',
+    inputBorder: '#D8D3C5',
+    accent: '#8A6E3E',
   };
 }
 

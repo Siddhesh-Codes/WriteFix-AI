@@ -16,8 +16,8 @@ export const MistakeExplainer: React.FC<MistakeExplainerProps> = ({ mistakes, th
 
   return (
     <div style={{ marginTop: '12px', borderTop: `1px solid ${themeColors.border}`, paddingTop: '10px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: themeColors.textSecondary, marginBottom: '8px' }}>
-        <Info size={14} color="#6366f1" />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 600, color: themeColors.textSecondary, marginBottom: '8px', fontFamily: '"IBM Plex Mono", monospace', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+        <Info size={13} color="#B08D4F" />
         EXPLANATION ({mistakes.length} issue{mistakes.length > 1 ? 's' : ''} found)
       </div>
 
@@ -53,7 +53,7 @@ export const MistakeExplainer: React.FC<MistakeExplainerProps> = ({ mistakes, th
               }}
             >
               <span>
-                <strong style={{ color: themeColors.isDark ? '#fca5a5' : '#ef4444' }}>"{mistake.original}"</strong> → <strong style={{ color: themeColors.isDark ? '#6ee7b7' : '#22c55e' }}>"{mistake.replacement}"</strong>
+                <strong style={{ color: '#BE5B3D' }}>"{mistake.original}"</strong> → <strong style={{ color: '#7A9471' }}>"{mistake.replacement}"</strong>
               </span>
               <span style={{ fontSize: '11px', color: themeColors.textSecondary }}>{isOpen ? '▲' : '▼'}</span>
             </button>
@@ -61,7 +61,7 @@ export const MistakeExplainer: React.FC<MistakeExplainerProps> = ({ mistakes, th
             {isOpen && (
               <div style={{ padding: '8px 12px 12px 12px', fontSize: '12px', color: themeColors.textSecondary, backgroundColor: themeColors.bgTertiary, borderTop: `1px dashed ${themeColors.border}` }}>
                 <p style={{ margin: 0, lineHeight: '1.4' }}>{mistake.description}</p>
-                <div style={{ marginTop: '6px', fontSize: '11px', textTransform: 'capitalize', color: '#6366f1' }}>
+                <div style={{ marginTop: '6px', fontSize: '11px', textTransform: 'capitalize', color: '#B08D4F', fontFamily: '"IBM Plex Mono", monospace' }}>
                   Category: {mistake.category}
                 </div>
               </div>

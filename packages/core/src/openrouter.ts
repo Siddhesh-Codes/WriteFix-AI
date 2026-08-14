@@ -1,5 +1,5 @@
 import { WritingProvider, CorrectionRequest, CorrectionResponse } from './types';
-import { buildSystemPrompt, buildUserPrompt } from './prompt';
+import { buildOptimizedSystemPrompt, buildUserTurn } from './prompt';
 import { CorrectionResponseSchema } from './schema';
 
 export class OpenRouterProvider implements WritingProvider {
@@ -18,8 +18,8 @@ export class OpenRouterProvider implements WritingProvider {
       throw new Error('OpenRouter API Key is missing. Please configure it in options.');
     }
 
-    const systemPrompt = buildSystemPrompt();
-    const userPrompt = buildUserPrompt(request.text, request.mode, request.preferences);
+    const systemPrompt = buildOptimizedSystemPrompt(request.mode, request.toneModifier, request.preferences);
+    const userPrompt = buildUserTurn(request.text);
 
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="100%" height="100%">
+  <defs>
+    <radialGradient id="signetGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#CBB177" stop-opacity="0.18" />
+      <stop offset="100%" stop-color="#15171B" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="signetGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4B679" />
+      <stop offset="50%" stop-color="#B08D4F" />
+      <stop offset="100%" stop-color="#8A6E3E" />
+    </linearGradient>
+    <linearGradient id="sealBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B08D4F" />
+      <stop offset="50%" stop-color="#544326" />
+      <stop offset="100%" stop-color="#8A6E3E" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background Base Canvas -->
+  <rect width="128" height="128" rx="28" fill="#15171B" />
+
+  <!-- Subtle Ambient Seal Glow -->
+  <circle cx="64" cy="64" r="56" fill="url(#signetGlow)" />
+
+  <!-- Outer Octagonal Signet Ring (Wax Seal / Hallmark Geometry) -->
+  <polygon points="64,8 103,24 119,64 103,104 64,120 25,104 9,64 25,24" 
+           fill="#1C1F24" 
+           stroke="url(#sealBorder)" 
+           stroke-width="2.5" 
+           stroke-linejoin="round" />
+
+  <!-- Inner Inscribed Precision Ring -->
+  <circle cx="64" cy="64" r="42" 
+          fill="#15171B" 
+          stroke="#B08D4F" 
+          stroke-width="1.75" 
+          stroke-dasharray="1 3" 
+          stroke-opacity="0.6" />
+
+  <!-- Editorial Diamond Star Points -->
+  <polygon points="64,26 67,31 64,36 61,31" fill="#B08D4F" />
+  <polygon points="64,92 67,97 64,102 61,97" fill="#B08D4F" />
+  <polygon points="26,64 31,67 36,64 31,61" fill="#B08D4F" />
+  <polygon points="92,64 97,67 102,64 97,61" fill="#B08D4F" />
+
+  <!-- Stylized Geometric "W" Editorial Monogram with Precision Pen Chisel -->
+  <!-- Left Wing -->
+  <path d="M40 45 L48 79 L56 57 L64 79 L72 57 L80 79 L88 45" 
+        fill="none" 
+        stroke="url(#signetGold)" 
+        stroke-width="4.5" 
+        stroke-linecap="round" 
+        stroke-linejoin="round" />
+
+  <!-- Center Proofreader Nib Apex Diamond -->
+  <polygon points="64,42 68.5,49 64,56 59.5,49" fill="url(#signetGold)" />
+
+  <!-- Base Hallmark Bar -->
+  <line x1="48" y1="87" x2="80" y2="87" 
+        stroke="#B08D4F" 
+        stroke-width="2" 
+        stroke-linecap="round" 
+        stroke-opacity="0.8" />
+</svg>

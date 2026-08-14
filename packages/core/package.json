@@ -15,7 +15,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "compile": "tsc --noEmit"
+    "compile": "tsc --noEmit",
+    "test": "vite-node test/prompt-engine.test.ts"
   },
   "dependencies": {
     "zod": "^3.24.1"

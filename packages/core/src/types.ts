@@ -1,9 +1,16 @@
+export type WriteFixMode =
+  | 'grammar'
+  | 'professional'
+  | 'humanize'
+  | 'concise'
+  | 'academic'
+  | 'indian-professional';
+
 export type CorrectionMode =
+  | WriteFixMode
   | 'grammar_only'
   | 'grammar_punctuation'
   | 'natural'
-  | 'professional'
-  | 'humanize'
   | 'simple'
   | 'polite'
   | 'short'
@@ -20,17 +27,20 @@ export interface WritingPreference {
 export interface Mistake {
   type: string;
   description: string;
+  explanation?: string;
   original: string;
   replacement: string;
-  category: 'grammar' | 'spelling' | 'punctuation' | 'capitalization';
+  category: 'grammar' | 'spelling' | 'punctuation' | 'capitalization' | 'style' | string;
 }
 
 export interface CorrectionRequest {
   text: string;
   mode: CorrectionMode;
+  toneModifier?: CorrectionMode | string;
   preferences?: WritingPreference[];
   tone?: TonePreset;
   temperature?: number;
+  topP?: number;
 }
 
 export interface CorrectionResponse {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { PenLine, Sparkles, Briefcase, Copy, X } from 'lucide-react';
+import { CheckCheck, MessageSquareQuote, Briefcase, Copy, X } from 'lucide-react';
 import { DOMRectJSON } from '../../lib/selection/detector';
 import { CorrectionMode } from '../../lib/storage/types';
 
@@ -30,33 +30,35 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({
         alignItems: 'center',
         gap: '4px',
         padding: '4px 8px',
-        backgroundColor: '#1e293b',
+        backgroundColor: '#1C1F24',
         borderRadius: '24px',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.25)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6)',
+        border: '1px solid rgba(236, 232, 222, 0.15)',
+        fontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
         fontSize: '12px',
-        color: '#ffffff',
+        color: '#ECE8DE',
         animation: 'wf-fade-in 0.15s ease-out',
         userSelect: 'none',
       }}
     >
       {/* Brand Icon */}
       <img
-        src={chrome.runtime?.getURL ? chrome.runtime.getURL('logo.png') : ''}
-        alt="WriteFix AI"
+        src={chrome.runtime?.getURL ? chrome.runtime.getURL('icon-32.png') : '/icon-32.png'}
+        alt="WriteFix"
         style={{ width: '18px', height: '18px', borderRadius: '4px', marginLeft: '4px' }}
         onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
       />
 
-      <span style={{ fontWeight: 600, fontSize: '11px', color: '#818cf8', marginRight: '4px' }}>WriteFix</span>
+      <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 600, fontSize: '12px', color: '#B08D4F', margin: '0 4px' }}>
+        WriteFix
+      </span>
 
       <button
         onClick={() => onSelectMode('grammar_only')}
         style={btnStyle}
         title="Fix Grammar & Spelling"
       >
-        <PenLine size={13} />
+        <CheckCheck size={13} color="#B08D4F" />
         Grammar
       </button>
 
@@ -65,7 +67,7 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({
         style={btnStyle}
         title="Humanize Writing"
       >
-        <Sparkles size={13} />
+        <MessageSquareQuote size={13} color="#B08D4F" />
         Humanize
       </button>
 
@@ -74,11 +76,11 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({
         style={btnStyle}
         title="Make Professional"
       >
-        <Briefcase size={13} />
+        <Briefcase size={13} color="#B08D4F" />
         Pro
       </button>
 
-      <div style={{ width: '1px', height: '14px', backgroundColor: 'rgba(255, 255, 255, 0.2)', margin: '0 2px' }} />
+      <div style={{ width: '1px', height: '14px', backgroundColor: 'rgba(236, 232, 222, 0.18)', margin: '0 2px' }} />
 
       <button
         onClick={onCopy}
@@ -102,12 +104,12 @@ export const FloatingToolbar: React.FC<FloatingToolbarProps> = ({
 const btnStyle: React.CSSProperties = {
   background: 'none',
   border: 'none',
-  color: '#ffffff',
+  color: '#ECE8DE',
   padding: '4px 8px',
   borderRadius: '12px',
   cursor: 'pointer',
   fontWeight: 500,
-  fontSize: '12px',
+  fontSize: '11.5px',
   display: 'flex',
   alignItems: 'center',
   gap: '5px',

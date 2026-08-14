@@ -1,7 +1,8 @@
 import { WritingProvider, CorrectionRequest, CorrectionResponse } from './types';
-import { buildSystemPrompt, buildUserPrompt } from './prompt';
+import { buildOptimizedSystemPrompt, buildUserTurn } from './prompt';
 import { CorrectionResponseSchema } from './schema';
 import { DEFAULT_MODELS } from './model-defaults';
+import { crossCheckMistakesWithDiff } from './diff-engine';
 
 export class GeminiProvider implements WritingProvider {
   readonly name = 'gemini';
@@ -19,8 +20,8 @@ export class GeminiProvider implements WritingProvider {
       throw new Error('Gemini API Key is missing. Please configure it in options.');
     }
 
-    const systemPrompt = buildSystemPrompt();
-    const userPrompt = buildUserPrompt(request.text, request.mode, request.preferences);
+    const systemPrompt = buildOptimizedSystemPrompt(request.mode, request.toneModifier, request.preferences);
+    const userTurn = buildUserTurn(request.text);
 
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey.trim()}`;
 
@@ -30,24 +31,48 @@ export class GeminiProvider implements WritingProvider {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: systemPrompt }]
+        },
         contents: [
           {
             role: 'user',
-            parts: [
-              { text: `${systemPrompt}\n\n${userPrompt}` }
-            ]
+            parts: [{ text: userTurn }]
           }
         ],
         generationConfig: {
-          temperature: request.temperature ?? 0.3,
+          temperature: request.temperature ?? 0.2,
+          topP: request.topP ?? 0.85,
           responseMimeType: 'application/json',
+          responseSchema: {
+            type: 'OBJECT',
+            properties: {
+              corrected: { type: 'STRING' },
+              mistakes: {
+                type: 'ARRAY',
+                items: {
+                  type: 'OBJECT',
+                  properties: {
+                    original: { type: 'STRING' },
+                    replacement: { type: 'STRING' },
+                    category: { type: 'STRING' },
+                    explanation: { type: 'STRING' }
+                  },
+                  required: ['original', 'replacement']
+                }
+              },
+              confidence: { type: 'INTEGER' }
+            },
+            required: ['corrected', 'confidence']
+          }
         }
       }),
     });
 
     if (!response.ok) {
       const errStatus = response.status;
-      throw new Error(`Gemini API Error (${errStatus})`);
+      const errText = await response.text();
+      throw new Error(`Gemini API Error (${errStatus}): ${errText}`);
     }
 
     const data = await response.json();
@@ -56,27 +81,43 @@ export class GeminiProvider implements WritingProvider {
     try {
       const parsed = JSON.parse(rawContent);
 
-      if (Array.isArray(parsed.mistakes)) {
-        parsed.mistakes = parsed.mistakes.map((m: any) => ({
-          ...m,
-          category: m.category && ['grammar', 'spelling', 'punctuation', 'capitalization'].includes(m.category)
-            ? m.category
-            : 'grammar',
-        }));
-      }
+      const rawMistakes = Array.isArray(parsed.mistakes) ? parsed.mistakes : [];
+      const crossCheckedMistakes = crossCheckMistakesWithDiff(
+        request.text,
+        parsed.corrected || request.text,
+        rawMistakes
+      );
 
       const validated = CorrectionResponseSchema.parse({
-        ...parsed,
+        corrected: parsed.corrected || request.text,
+        mistakes: crossCheckedMistakes,
+        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 95,
         provider: 'gemini',
       });
       return validated;
     } catch (e: any) {
-      return {
-        corrected: rawContent.replace(/^```json\s*/, '').replace(/```$/, '').trim(),
-        mistakes: [],
-        confidence: 90,
-        provider: 'gemini',
-      };
+      const cleaned = rawContent.replace(/^```json\s*/, '').replace(/```$/, '').trim();
+      try {
+        const fallbackParsed = JSON.parse(cleaned);
+        const crossChecked = crossCheckMistakesWithDiff(
+          request.text,
+          fallbackParsed.corrected || request.text,
+          fallbackParsed.mistakes || []
+        );
+        return CorrectionResponseSchema.parse({
+          ...fallbackParsed,
+          mistakes: crossChecked,
+          provider: 'gemini',
+        });
+      } catch {
+        const crossChecked = crossCheckMistakesWithDiff(request.text, cleaned || request.text, []);
+        return {
+          corrected: cleaned || request.text,
+          mistakes: crossChecked,
+          confidence: 85,
+          provider: 'gemini',
+        };
+      }
     }
   }
 

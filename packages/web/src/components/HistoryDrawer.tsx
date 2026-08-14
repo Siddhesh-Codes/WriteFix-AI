@@ -9,10 +9,8 @@ import {
   RotateCcw,
   Download,
   Clock,
-  ArrowRight,
   Copy,
   Check,
-  Calendar,
 } from 'lucide-react';
 
 interface HistoryDrawerProps {
@@ -32,8 +30,6 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
   const [filterFav, setFilterFav] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const historyList = WebStorage.getHistory();
-
-  if (!isOpen) return null;
 
   const filtered = historyList.filter((item) => {
     if (filterFav && !item.favorite) return false;
@@ -85,6 +81,8 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
     });
   };
 
+  if (!isOpen) return null;
+
   return (
     <>
       {/* Backdrop */}
@@ -93,10 +91,14 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
         style={{
           position: 'fixed',
           inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(4px)',
+          backgroundColor: 'rgba(21, 23, 27, 0.75)',
+          backdropFilter: 'blur(6px)',
+          WebkitBackdropFilter: 'blur(6px)',
           zIndex: 90,
-          animation: 'fadeIn 0.15s ease-out',
+          opacity: isOpen ? 1 : 0,
+          visibility: isOpen ? 'visible' : 'hidden',
+          transition: 'opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.24s ease',
+          pointerEvents: isOpen ? 'auto' : 'none',
         }}
       />
 
@@ -114,8 +116,11 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
           zIndex: 100,
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: 'var(--shadow-lg)',
-          animation: 'slideInRight 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          boxShadow: '-10px 0 40px rgba(0, 0, 0, 0.5)',
+          transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
+          visibility: isOpen ? 'visible' : 'hidden',
+          transition: 'transform 0.26s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.26s ease',
+          pointerEvents: isOpen ? 'auto' : 'none',
         }}
       >
         {/* Header */}
@@ -130,17 +135,26 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Clock size={16} color="var(--primary)" />
-            <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
+            <Clock size={16} color="var(--color-signet)" />
+            <span
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 600,
+                fontSize: '16px',
+                color: 'var(--text-primary)',
+              }}
+            >
               Revision History
             </span>
             <span
               style={{
+                fontFamily: 'var(--font-mono)',
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 600,
                 padding: '2px 7px',
-                borderRadius: 'var(--radius-full)',
-                backgroundColor: 'var(--bg-surface-hover)',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--bg-surface)',
+                border: '1px solid var(--border-subtle)',
                 color: 'var(--text-secondary)',
               }}
             >
@@ -197,6 +211,7 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                 color: 'var(--text-primary)',
                 fontSize: '13px',
                 outline: 'none',
+                fontFamily: 'var(--font-body)',
               }}
             />
             {search && (
@@ -218,15 +233,15 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                 gap: '5px',
                 padding: '4px 10px',
                 borderRadius: 'var(--radius-sm)',
-                border: `1px solid ${filterFav ? 'var(--accent-amber-border)' : 'var(--border-subtle)'}`,
-                backgroundColor: filterFav ? 'var(--accent-amber-subtle)' : 'var(--bg-surface-elevated)',
-                color: filterFav ? 'var(--accent-amber)' : 'var(--text-secondary)',
-                fontSize: '12px',
+                border: `1px solid ${filterFav ? 'var(--color-signet)' : 'var(--border-subtle)'}`,
+                backgroundColor: filterFav ? 'var(--primary-subtle)' : 'var(--bg-surface-elevated)',
+                color: filterFav ? 'var(--color-signet)' : 'var(--text-secondary)',
+                fontSize: '11.5px',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
             >
-              <Star size={12} fill={filterFav ? 'var(--accent-amber)' : 'none'} />
+              <Star size={12} fill={filterFav ? 'var(--color-signet)' : 'none'} color="var(--color-signet)" />
               <span>Starred Only</span>
             </button>
 
@@ -261,9 +276,9 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                     gap: '4px',
                     padding: '4px 8px',
                     borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border-subtle)',
-                    backgroundColor: 'var(--bg-surface-elevated)',
-                    color: 'var(--danger)',
+                    border: '1px solid var(--danger-border)',
+                    backgroundColor: 'var(--danger-bg)',
+                    color: 'var(--color-correction)',
                     fontSize: '11px',
                     cursor: 'pointer',
                   }}
@@ -290,13 +305,13 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                 gap: '12px',
               }}
             >
-              <Clock size={32} />
+              <Clock size={32} color="var(--text-muted)" />
               <div>
                 <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '14px' }}>
                   No history records found
                 </div>
-                <div style={{ fontSize: '12px', marginTop: '4px' }}>
-                  {search ? 'Try adjusting your search query' : 'Your corrected drafts will be automatically saved here'}
+                <div style={{ fontSize: '12px', marginTop: '4px', color: 'var(--text-secondary)' }}>
+                  {search ? 'Try adjusting your search query' : 'Your polished drafts will be automatically archived here'}
                 </div>
               </div>
             </div>
@@ -311,6 +326,7 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                   flexDirection: 'column',
                   gap: '10px',
                   backgroundColor: 'var(--bg-surface-elevated)',
+                  border: '1px solid var(--border-subtle)',
                 }}
               >
                 {/* Card Header */}
@@ -318,19 +334,26 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span
                       style={{
+                        fontFamily: 'var(--font-mono)',
                         fontSize: '10px',
-                        fontWeight: 700,
+                        fontWeight: 600,
                         textTransform: 'uppercase',
                         padding: '2px 7px',
                         borderRadius: 'var(--radius-sm)',
                         backgroundColor: 'var(--primary-subtle)',
-                        color: 'var(--primary)',
+                        color: 'var(--color-signet)',
                         border: '1px solid var(--primary-border)',
                       }}
                     >
                       {item.mode.replace('_', ' ')}
                     </span>
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    <span
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '11px',
+                        color: 'var(--text-muted)',
+                      }}
+                    >
                       {formatTime(item.timestamp)}
                     </span>
                   </div>
@@ -344,11 +367,11 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                         borderRadius: 'var(--radius-sm)',
                         border: 'none',
                         background: 'none',
-                        color: item.favorite ? 'var(--accent-amber)' : 'var(--text-muted)',
+                        color: item.favorite ? 'var(--color-signet)' : 'var(--text-muted)',
                         cursor: 'pointer',
                       }}
                     >
-                      <Star size={14} fill={item.favorite ? 'var(--accent-amber)' : 'none'} />
+                      <Star size={14} fill={item.favorite ? 'var(--color-signet)' : 'none'} color="var(--color-signet)" />
                     </button>
 
                     <button
@@ -378,6 +401,7 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
                     overflow: 'hidden',
+                    fontFamily: 'var(--font-body)',
                   }}
                 >
                   {item.correctedText || item.originalText}
@@ -393,7 +417,13 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                     borderTop: '1px solid var(--border-subtle)',
                   }}
                 >
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                  <span
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '11px',
+                      color: 'var(--text-muted)',
+                    }}
+                  >
                     {item.wordCount} words
                   </span>
 
@@ -413,7 +443,7 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                         cursor: 'pointer',
                       }}
                     >
-                      {copiedId === item.id ? <Check size={11} color="var(--success)" /> : <Copy size={11} />}
+                      {copiedId === item.id ? <Check size={11} color="var(--color-confirmed)" /> : <Copy size={11} />}
                       <span>{copiedId === item.id ? 'Copied' : 'Copy'}</span>
                     </button>
 
@@ -428,9 +458,9 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
                         gap: '4px',
                         padding: '3px 9px',
                         borderRadius: 'var(--radius-sm)',
-                        border: '1px solid var(--primary-border)',
+                        border: '1px solid var(--color-signet-dim)',
                         backgroundColor: 'var(--primary-subtle)',
-                        color: 'var(--primary)',
+                        color: 'var(--color-signet)',
                         fontSize: '11px',
                         fontWeight: 600,
                         cursor: 'pointer',

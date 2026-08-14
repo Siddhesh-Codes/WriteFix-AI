@@ -32,6 +32,10 @@ Thumbs.db
 *.swp
 *.swo
 
-# Temporary files
+# Temporary files & Scratch
 scratch/
 tmp/
+.kombai/
+scratch_*.png
+test-screenshot.js
+generate-brand-assets.js

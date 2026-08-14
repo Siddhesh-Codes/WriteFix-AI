@@ -26,7 +26,7 @@ export default function App() {
   }, []);
 
   if (!settings) {
-    return <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading settings...</div>;
+    return <div style={{ padding: '40px', textAlign: 'center', color: '#8B8F96' }}>Loading settings...</div>;
   }
 
   const themeColors = getThemeColors(settings.theme);
@@ -108,7 +108,7 @@ export default function App() {
     padding: '24px',
     marginBottom: '20px',
     border: `1px solid ${themeColors.border}`,
-    boxShadow: themeColors.isDark ? '0 4px 12px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.05)',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
     color: themeColors.textPrimary,
     transition: 'background-color 0.2s ease, border-color 0.2s ease',
   };
@@ -137,28 +137,30 @@ export default function App() {
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '10px 12px',
-    borderRadius: '8px',
+    borderRadius: '6px',
     border: `1px solid ${themeColors.inputBorder}`,
     backgroundColor: themeColors.inputBg,
     color: themeColors.textPrimary,
     fontSize: '13px',
     boxSizing: 'border-box',
+    outline: 'none',
+    fontFamily: '"IBM Plex Sans", system-ui, sans-serif',
   };
 
   return (
-    <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ maxWidth: '800px', margin: '40px auto', padding: '0 20px', fontFamily: '"IBM Plex Sans", system-ui, sans-serif' }}>
       {/* Header with Logo */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '20px', borderBottom: `1px solid ${themeColors.border}`, marginBottom: '30px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <img src={chrome.runtime?.getURL ? chrome.runtime.getURL('logo.png') : ''} alt="WriteFix AI" style={{ width: '42px', height: '42px', borderRadius: '10px' }} />
+          <img src={chrome.runtime?.getURL ? chrome.runtime.getURL('icon-32.png') : '/icon-32.png'} alt="WriteFix" style={{ width: '36px', height: '36px', borderRadius: '8px' }} />
           <div>
-            <h1 style={{ margin: 0, fontSize: '22px', color: themeColors.textPrimary }}>WriteFix AI Settings</h1>
+            <h1 style={{ margin: 0, fontSize: '22px', fontFamily: 'Fraunces, Georgia, serif', color: themeColors.textPrimary }}>WriteFix AI Settings</h1>
             <div style={{ fontSize: '13px', color: themeColors.textSecondary }}>Configure AI providers, API keys, shortcuts, and themes</div>
           </div>
         </div>
 
         {savedToast && (
-          <div style={{ padding: '6px 14px', borderRadius: '20px', backgroundColor: themeColors.isDark ? '#065f46' : '#dcfce7', color: themeColors.isDark ? '#34d399' : '#166534', fontWeight: 600, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <div style={{ padding: '6px 14px', borderRadius: '20px', backgroundColor: 'rgba(122, 148, 113, 0.15)', border: '1px solid rgba(122, 148, 113, 0.3)', color: '#7A9471', fontWeight: 600, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Check size={14} /> Settings Saved
           </div>
         )}
@@ -167,7 +169,7 @@ export default function App() {
       {/* Provider Config */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <Bot size={20} color="#6366f1" />
+          <Bot size={20} color="#B08D4F" />
           <h2 style={sectionTitle}>Writing Provider & API Keys</h2>
         </div>
         <p style={sectionDesc}>Choose your active AI engine or use free keyless LanguageTool.</p>
@@ -196,7 +198,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => toggleShowKey(settings.activeProvider)}
-                style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '11px', cursor: 'pointer', fontWeight: 500 }}
+                style={{ background: 'none', border: 'none', color: '#B08D4F', fontSize: '11px', cursor: 'pointer', fontWeight: 600 }}
               >
                 {showKeyMap[settings.activeProvider] ? 'Hide' : 'Show'}
               </button>
@@ -206,10 +208,10 @@ export default function App() {
               placeholder={`Paste your ${settings.activeProvider.toUpperCase()} API key here...`}
               value={settings.apiKeys[settings.activeProvider] || ''}
               onChange={(e) => handleApiKeyChange(settings.activeProvider, e.target.value)}
-              style={{ ...inputStyle, fontFamily: 'monospace' }}
+              style={{ ...inputStyle, fontFamily: '"IBM Plex Mono", monospace' }}
             />
             {settings.activeProvider === 'gemini' && (
-              <div style={{ fontSize: '11px', color: '#ca8a04', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ fontSize: '11px', color: '#B08D4F', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <AlertTriangle size={12} /> Free tier data may be used by Google to improve services.
               </div>
             )}
@@ -221,12 +223,12 @@ export default function App() {
             onClick={testProviderConnection}
             disabled={testStatus.testing}
             style={{
-              backgroundColor: '#4f46e5',
-              color: '#ffffff',
+              backgroundColor: '#B08D4F',
+              color: '#15171B',
               border: 'none',
               padding: '8px 16px',
-              borderRadius: '8px',
-              fontWeight: 600,
+              borderRadius: '6px',
+              fontWeight: 700,
               fontSize: '13px',
               cursor: testStatus.testing ? 'not-allowed' : 'pointer',
               opacity: testStatus.testing ? 0.7 : 1,
@@ -239,7 +241,7 @@ export default function App() {
           </button>
 
           {testStatus.message && (
-            <span style={{ fontSize: '13px', fontWeight: 500, color: testStatus.success ? (themeColors.isDark ? '#34d399' : '#166534') : '#f87171' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: testStatus.success ? '#7A9471' : '#BE5B3D' }}>
               {testStatus.message}
             </span>
           )}
@@ -249,7 +251,7 @@ export default function App() {
       {/* Keyboard Shortcuts Customization */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <Keyboard size={20} color="#6366f1" />
+          <Keyboard size={20} color="#B08D4F" />
           <h2 style={sectionTitle}>Custom Keyboard Shortcut</h2>
         </div>
         <p style={sectionDesc}>Select text anywhere on any webpage and press this shortcut key to trigger WriteFix AI.</p>
@@ -263,9 +265,10 @@ export default function App() {
               onKeyDown={handleShortcutKeyDown}
               style={{
                 ...inputStyle,
-                backgroundColor: isRecordingShortcut ? (themeColors.isDark ? '#1e3a8a' : '#eff6ff') : themeColors.inputBg,
-                borderColor: isRecordingShortcut ? '#3b82f6' : themeColors.inputBorder,
-                color: isRecordingShortcut ? '#60a5fa' : themeColors.textPrimary,
+                fontFamily: '"IBM Plex Mono", monospace',
+                backgroundColor: isRecordingShortcut ? 'rgba(176, 141, 79, 0.12)' : themeColors.inputBg,
+                borderColor: isRecordingShortcut ? '#B08D4F' : themeColors.inputBorder,
+                color: isRecordingShortcut ? '#B08D4F' : themeColors.textPrimary,
                 fontWeight: 600,
                 cursor: 'pointer',
                 textAlign: 'center',
@@ -279,11 +282,11 @@ export default function App() {
             onClick={() => setIsRecordingShortcut(!isRecordingShortcut)}
             style={{
               padding: '10px 16px',
-              borderRadius: '8px',
-              backgroundColor: isRecordingShortcut ? '#ef4444' : '#4f46e5',
-              color: '#ffffff',
+              borderRadius: '6px',
+              backgroundColor: isRecordingShortcut ? '#BE5B3D' : '#B08D4F',
+              color: isRecordingShortcut ? '#ffffff' : '#15171B',
               border: 'none',
-              fontWeight: 600,
+              fontWeight: 700,
               fontSize: '13px',
               cursor: 'pointer',
             }}
@@ -296,7 +299,7 @@ export default function App() {
             onClick={() => updateSettings({ customShortcut: 'Ctrl+Shift+G' })}
             style={{
               padding: '10px 14px',
-              borderRadius: '8px',
+              borderRadius: '6px',
               backgroundColor: themeColors.bgTertiary,
               color: themeColors.textPrimary,
               border: `1px solid ${themeColors.border}`,
@@ -322,7 +325,7 @@ export default function App() {
                 chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
               }
             }}
-            style={{ background: 'none', border: 'none', color: '#6366f1', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+            style={{ background: 'none', border: 'none', color: '#B08D4F', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
           >
             Manage Chrome Extension Shortcuts <ExternalLink size={12} />
           </button>
@@ -332,7 +335,7 @@ export default function App() {
       {/* Appearance & Trigger Behavior */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-          <Palette size={20} color="#6366f1" />
+          <Palette size={20} color="#B08D4F" />
           <h2 style={sectionTitle}>Appearance & Trigger Behavior</h2>
         </div>
 

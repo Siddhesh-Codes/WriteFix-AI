@@ -1,3 +1,5 @@
+import { Mistake } from './types';
+
 export interface DiffSegment {
   type: 'equal' | 'add' | 'remove';
   value: string;
@@ -59,4 +61,90 @@ export function computeWordDiff(originalText: string, correctedText: string): Di
 
 function tokenize(text: string): string[] {
   return text.match(/[\w']+|[^\w\s]+|\s+/g) || [text];
+}
+
+/**
+ * Myers-diff / LCS Cross-check:
+ * Client-side validation that compares input vs corrected text,
+ * detecting any transformed spans missed by the model's mistakes[] array
+ * and appending them so the explanation list is 100% complete.
+ */
+export function crossCheckMistakesWithDiff(
+  originalText: string,
+  correctedText: string,
+  existingMistakes: Mistake[] = []
+): Mistake[] {
+  if (originalText === correctedText) {
+    return existingMistakes;
+  }
+
+  const diff = computeWordDiff(originalText, correctedText);
+  const result: Mistake[] = [...existingMistakes];
+
+  let k = 0;
+  while (k < diff.length) {
+    if (diff[k].type === 'equal') {
+      k++;
+      continue;
+    }
+
+    let removed = '';
+    let added = '';
+
+    while (k < diff.length && diff[k].type !== 'equal') {
+      if (diff[k].type === 'remove') {
+        removed += diff[k].value;
+      } else if (diff[k].type === 'add') {
+        added += diff[k].value;
+      }
+      k++;
+    }
+
+    const trimmedOrig = removed.trim();
+    const trimmedRepl = added.trim();
+
+    if (!trimmedOrig && !trimmedRepl) {
+      continue;
+    }
+
+    // Check if this span is already represented in existingMistakes
+    const alreadyCovered = result.some((m) => {
+      const orig = (m.original || '').trim();
+      const repl = (m.replacement || '').trim();
+      if (!orig && !repl) return false;
+      return (
+        (orig === trimmedOrig && repl === trimmedRepl) ||
+        (trimmedOrig && orig && (trimmedOrig.includes(orig) || orig.includes(trimmedOrig))) ||
+        (trimmedRepl && repl && (trimmedRepl.includes(repl) || repl.includes(trimmedRepl)))
+      );
+    });
+
+    if (!alreadyCovered && (trimmedOrig || trimmedRepl)) {
+      let category = 'grammar';
+      if (trimmedOrig.toLowerCase() === trimmedRepl.toLowerCase()) {
+        category = 'capitalization';
+      } else if (/^[^\w\s]+$/.test(trimmedOrig) || /^[^\w\s]+$/.test(trimmedRepl)) {
+        category = 'punctuation';
+      } else if (trimmedOrig.split(/\s+/).length > 2 || trimmedRepl.split(/\s+/).length > 2) {
+        category = 'style';
+      }
+
+      const explanation = trimmedOrig && trimmedRepl
+        ? `Replaced "${trimmedOrig}" with "${trimmedRepl}".`
+        : trimmedOrig
+        ? `Removed unnecessary word(s) "${trimmedOrig}".`
+        : `Added "${trimmedRepl}" for grammatical completeness.`;
+
+      result.push({
+        type: category,
+        original: trimmedOrig,
+        replacement: trimmedRepl,
+        category,
+        explanation,
+        description: explanation,
+      });
+    }
+  }
+
+  return result;
 }

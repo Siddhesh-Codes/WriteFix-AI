@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CORRECTION_MODES, CorrectionMode, Mistake } from '@writefix/core';
+import {
+  CANONICAL_PRIMARY_MODES,
+  CANONICAL_TONE_MODIFIERS,
+  CorrectionMode,
+  Mistake,
+} from '@writefix/core';
 import { WebSettings } from '../types';
 import { globalWebOrchestrator } from '../services/web-orchestrator';
 import { DiffViewer } from './DiffViewer';
@@ -7,68 +12,42 @@ import { MistakeInspector } from './MistakeInspector';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { ToneCustomizer } from './ToneCustomizer';
 import {
-  Feather,
   Play,
   Upload,
   Clipboard,
   Trash2,
-  CheckCircle2,
-  AlertCircle,
+  CheckCheck,
+  Briefcase,
+  GraduationCap,
+  Minimize2,
+  MessageSquareQuote,
+  MessageCircle,
+  BookOpen,
+  Smile,
+  Scissors,
+  Globe,
   FileText,
   BarChart3,
   Sliders,
-  Sparkles,
-  ArrowRight,
-  Briefcase,
-  Smile,
-  Minimize2,
-  BookOpen,
   Check,
-  Zap,
+  AlertCircle,
+  SlidersHorizontal,
 } from 'lucide-react';
 
-const SAMPLE_PRESETS = [
-  {
-    category: 'Grammar & Clarity',
-    name: 'Logic & Problem Solving Thoughts',
-    text: `days again quite what im doing im really fed up with this approach i really want to learn the actual problem solving beyond the syntax world i mean ofc the syntax is necessary in order to write the code but before the logic is very imp i feel
+const PRIMARY_ICONS: Record<string, React.ReactNode> = {
+  grammar: <CheckCheck size={14} strokeWidth={2.2} />,
+  professional: <Briefcase size={14} strokeWidth={2} />,
+  academic: <GraduationCap size={14} strokeWidth={2} />,
+  concise: <Minimize2 size={14} strokeWidth={2} />,
+  humanize: <MessageSquareQuote size={14} strokeWidth={2} />,
+};
 
-like when i sees the problem my mind literally goes in the blank mode and stops the thinking or panic like what to do now what will happen if i'd not be able to solve the problem then that failure guilt and anxiety hits instead of thinking about the problem`,
-  },
-  {
-    category: 'Professional',
-    name: 'Engineering Job Application',
-    text: `Dear Hiring Manager,
-
-i am writting to express my deep intrest in the Software Engineer position at your companey. With over 3 years of experiance in react, nodejs, and cloud infrastructer, i have definately delivered high impact features that scale to millions of users. I beleive my problem solving skills would make me a great fit for your team.
-
-Looking forward to hearing from you soon!`,
-  },
-  {
-    category: 'Workplace Email',
-    name: 'Production Incident Update',
-    text: `hey boss, sorry for late update. we had some wierd bug in production today which occured around noon. the database was locked up and noone could login for like 20 mins. its fixed now and we will make sure it dont happen again tommorrow.`,
-  },
-  {
-    category: 'AI Detection / Humanize',
-    name: 'Robotic Corporate Jargon',
-    text: `In today's fast-paced digital ecosystem, it is undeniably crucial to utilize cutting-edge methodologies to optimize synergistic workflows. Furthermore, leveraging multifaceted paradigms enables stakeholders to maximize multifaceted efficiency across diverse verticals.`,
-  },
-  {
-    category: 'Academic',
-    name: 'Research Paper Introduction',
-    text: `The paper discusses about how machine learning algorythms can help in predicting student performance. Many researchers has shown that early warning systems is very helpful for prevent dropout rates in universities.`,
-  },
-];
-
-const MODE_ICONS: Record<string, React.ReactNode> = {
-  grammar_only: <CheckCircle2 size={14} />,
-  grammar_punctuation: <Feather size={14} />,
-  formal: <Briefcase size={14} />,
-  casual: <Smile size={14} />,
-  concise: <Minimize2 size={14} />,
-  humanize: <Sparkles size={14} />,
-  academic: <BookOpen size={14} />,
+const TONE_ICONS: Record<string, React.ReactNode> = {
+  natural: <MessageCircle size={13} strokeWidth={2} />,
+  simple: <BookOpen size={13} strokeWidth={2} />,
+  polite: <Smile size={13} strokeWidth={2} />,
+  short: <Scissors size={13} strokeWidth={2} />,
+  indian_professional: <Globe size={13} strokeWidth={2} />,
 };
 
 interface StudioEditorProps {
@@ -86,8 +65,11 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   onHistoryUpdated,
   restoredText,
 }) => {
-  const [inputText, setInputText] = useState<string>(SAMPLE_PRESETS[0].text);
-  const [activeMode, setActiveMode] = useState<CorrectionMode>('grammar_only');
+  const [inputText, setInputText] = useState<string>(
+    'The paper discusses about how machine learning algorythms can help in predicting student performance. Many researchers has shown that early warning systems is very helpful for prevent dropout rates in universities.'
+  );
+  const [activeMode, setActiveMode] = useState<CorrectionMode>('grammar');
+  const [activeTone, setActiveTone] = useState<CorrectionMode | null>(null);
   const [correctedText, setCorrectedText] = useState<string>('');
   const [mistakes, setMistakes] = useState<Mistake[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -95,7 +77,6 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [requiresKeyModal, setRequiresKeyModal] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'diff' | 'mistakes' | 'analytics' | 'tone'>('diff');
-  const [activePresetIndex, setActivePresetIndex] = useState<number>(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -109,8 +90,15 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
     if (restoredText) {
       setInputText(restoredText.original);
       setCorrectedText(restoredText.corrected);
-      setActiveMode(restoredText.mode);
-      showToast('Restored entry from history');
+      // Check if restored mode is primary or tone
+      const isPrimary = CANONICAL_PRIMARY_MODES.some((m) => m.id === restoredText.mode);
+      if (isPrimary) {
+        setActiveMode(restoredText.mode);
+        setActiveTone(null);
+      } else {
+        setActiveTone(restoredText.mode);
+      }
+      showToast('Restored draft from history');
     }
   }, [restoredText]);
 
@@ -124,20 +112,21 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [inputText, activeMode, settings]);
+  }, [inputText, activeMode, activeTone, settings]);
 
   const handleExecuteFix = async () => {
     if (!inputText.trim() || loading) return;
 
     setLoading(true);
     setError(null);
-    setStatusMessage('Analyzing draft structure & context...');
+    setStatusMessage('Analyzing draft syntax, tone & context...');
 
     try {
       const response = await globalWebOrchestrator.correct(
         {
           text: inputText,
           mode: activeMode,
+          toneModifier: activeTone || undefined,
         },
         settings,
         (status) => setStatusMessage(status)
@@ -150,9 +139,9 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
       } else {
         setCorrectedText(response.corrected);
         setMistakes(response.mistakes || []);
-        setStatusMessage('Polished successfully!');
+        setStatusMessage('Polished successfully');
         onHistoryUpdated();
-        showToast('Text enhanced and saved to history');
+        showToast('Text polished and saved to history');
       }
     } catch (err: any) {
       setError(err.message || 'An unexpected error occurred during processing.');
@@ -184,7 +173,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
         showToast('Pasted from clipboard');
       }
     } catch (e) {
-      alert('Clipboard access denied by browser.');
+      alert('Clipboard access was denied by browser settings.');
     }
   };
 
@@ -205,17 +194,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   const estimatedReadTimeSecs = Math.max(1, Math.round((wordCount / 200) * 60));
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px',
-        padding: '20px 28px',
-        maxWidth: '1600px',
-        margin: '0 auto',
-        width: '100%',
-      }}
-    >
+    <div className="studio-container">
       {/* Toast Notification */}
       {toastMessage && (
         <div
@@ -225,181 +204,244 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
             bottom: '24px',
             right: '24px',
             backgroundColor: 'var(--bg-surface-elevated)',
-            border: '1px solid var(--border-strong)',
+            border: '1px solid var(--color-signet-dim)',
             color: 'var(--text-primary)',
             padding: '10px 18px',
             borderRadius: 'var(--radius-md)',
             boxShadow: 'var(--shadow-lg)',
             fontSize: '13px',
-            fontWeight: 600,
+            fontWeight: 500,
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
             zIndex: 9999,
           }}
         >
-          <Check size={15} color="var(--success)" />
+          <Check size={16} color="var(--color-confirmed)" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Preset Library & Quick Launch Bar */}
+      {/* Mode Selection Hierarchy: Primary Modes + Subordinate Tone Modifiers */}
       <div
-        className="premium-card"
         style={{
-          padding: '12px 16px',
           display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '12px',
+          flexDirection: 'column',
+          gap: '8px',
+          flexShrink: 0,
         }}
       >
-        {/* Preset tags */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span
+        {/* Row 1: Primary Rewrite Modes (5 Max) */}
+        <div
+          className="premium-card touch-scroll-x"
+          style={{
+            padding: '4px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            backgroundColor: 'var(--bg-surface)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+          }}
+        >
+          {CANONICAL_PRIMARY_MODES.map((mode) => {
+            const isSelected = activeMode === mode.id;
+            return (
+              <button
+                key={mode.id}
+                onClick={() => setActiveMode(mode.id)}
+                title={mode.description}
+                style={{
+                  flex: '1 0 auto',
+                  minWidth: '110px',
+                  minHeight: '38px',
+                  padding: '7px 14px',
+                  borderRadius: 'var(--radius-md)',
+                  border: isSelected ? '1px solid var(--color-signet-dim)' : '1px solid transparent',
+                  backgroundColor: isSelected ? 'var(--bg-surface-elevated)' : 'transparent',
+                  color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  boxShadow: isSelected ? 'var(--shadow-sm)' : 'none',
+                  fontSize: '12.5px',
+                  fontWeight: isSelected ? 600 : 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '7px',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.color = 'var(--text-primary)';
+                    e.currentTarget.style.backgroundColor = 'var(--bg-surface-elevated)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.color = 'var(--text-secondary)';
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }
+                }}
+              >
+                <span style={{ color: isSelected ? 'var(--color-signet)' : 'var(--text-muted)' }}>
+                  {PRIMARY_ICONS[mode.id]}
+                </span>
+                <span>{mode.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Row 2: Secondary Tone Refinements (Modifiers) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '2px 4px',
+            overflowX: 'auto',
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
+          }}
+          className="touch-scroll-x"
+        >
+          <div
             style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              color: 'var(--text-muted)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '10.5px',
+              fontWeight: 500,
               textTransform: 'uppercase',
-              letterSpacing: '0.05em',
+              letterSpacing: '0.06em',
+              color: 'var(--text-muted)',
+              paddingRight: '6px',
+              flexShrink: 0,
             }}
           >
-            Sample Presets:
-          </span>
-          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-            {SAMPLE_PRESETS.map((preset, idx) => {
-              const isSelected = activePresetIndex === idx && inputText === preset.text;
+            <SlidersHorizontal size={11} color="var(--color-signet)" />
+            <span>Tone Modifier:</span>
+          </div>
+
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            {/* "None" reset button */}
+            <button
+              onClick={() => setActiveTone(null)}
+              style={{
+                padding: '6px 12px',
+                minHeight: '34px',
+                borderRadius: 'var(--radius-sm)',
+                border: !activeTone ? '1px solid var(--color-signet-dim)' : '1px solid var(--border-subtle)',
+                backgroundColor: !activeTone ? 'var(--primary-subtle)' : 'var(--bg-surface)',
+                color: !activeTone ? 'var(--color-signet)' : 'var(--text-muted)',
+                fontSize: '11.5px',
+                fontWeight: !activeTone ? 600 : 400,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap',
+                flexShrink: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              Default (Mode Native)
+            </button>
+
+            {CANONICAL_TONE_MODIFIERS.map((tone) => {
+              const isToneActive = activeTone === tone.id;
               return (
                 <button
-                  key={idx}
-                  onClick={() => {
-                    setActivePresetIndex(idx);
-                    setInputText(preset.text);
-                  }}
+                  key={tone.id}
+                  onClick={() => setActiveTone(tone.id)}
+                  title={tone.description}
                   style={{
-                    padding: '5px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    padding: '6px 12px',
+                    minHeight: '34px',
                     borderRadius: 'var(--radius-sm)',
-                    border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border-subtle)'}`,
-                    backgroundColor: isSelected ? 'var(--primary-subtle)' : 'var(--bg-surface-elevated)',
-                    color: isSelected ? 'var(--primary)' : 'var(--text-secondary)',
-                    fontSize: '12px',
-                    fontWeight: isSelected ? 600 : 500,
+                    border: isToneActive
+                      ? '1px solid var(--color-signet)'
+                      : '1px solid var(--border-subtle)',
+                    backgroundColor: isToneActive ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
+                    color: isToneActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    fontSize: '11.5px',
+                    fontWeight: isToneActive ? 600 : 400,
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isToneActive) {
+                      e.currentTarget.style.borderColor = 'var(--border-strong)';
+                      e.currentTarget.style.color = 'var(--text-primary)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isToneActive) {
+                      e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                      e.currentTarget.style.color = 'var(--text-secondary)';
+                    }
                   }}
                 >
-                  {preset.name}
+                  <span style={{ color: isToneActive ? 'var(--color-signet)' : 'var(--text-muted)' }}>
+                    {TONE_ICONS[tone.id]}
+                  </span>
+                  <span>{tone.label}</span>
                 </button>
               );
             })}
           </div>
         </div>
-
-        {/* Clear output indicator */}
-        {correctedText && (
-          <button
-            onClick={() => {
-              setCorrectedText('');
-              setMistakes([]);
-            }}
-            style={{
-              fontSize: '11px',
-              fontWeight: 500,
-              color: 'var(--text-muted)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-            }}
-          >
-            Reset Output
-          </button>
-        )}
-      </div>
-
-      {/* AI Correction Mode Segmented Bar */}
-      <div
-        className="premium-card"
-        style={{
-          padding: '6px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '4px',
-          overflowX: 'auto',
-          backgroundColor: 'var(--bg-surface-elevated)',
-        }}
-      >
-        {Object.values(CORRECTION_MODES).map((mode) => {
-          const isActive = mode.id === activeMode;
-          const icon = MODE_ICONS[mode.id] || <Feather size={14} />;
-          return (
-            <button
-              key={mode.id}
-              onClick={() => setActiveMode(mode.id)}
-              title={mode.description}
-              style={{
-                flex: 1,
-                minWidth: '130px',
-                padding: '8px 12px',
-                borderRadius: 'var(--radius-sm)',
-                border: 'none',
-                backgroundColor: isActive ? 'var(--bg-surface)' : 'transparent',
-                color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                boxShadow: isActive ? 'var(--shadow-sm)' : 'none',
-                fontSize: '12px',
-                fontWeight: isActive ? 700 : 500,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <span style={{ color: isActive ? 'var(--primary)' : 'var(--text-muted)' }}>
-                {icon}
-              </span>
-              <span>{mode.label}</span>
-            </button>
-          );
-        })}
       </div>
 
       {/* Dual Pane Studio Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.15fr)',
-          gap: '20px',
-          minHeight: '620px',
-        }}
-      >
+      <div className="studio-grid" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
         {/* Left Pane: Input Textarea */}
-        <div
-          className="premium-card"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}
-        >
+        <div className="premium-card studio-pane" style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
           {/* Header */}
           <div
             style={{
+              minHeight: '44px',
+              flexShrink: 0,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '12px 18px',
+              padding: '6px 14px',
               borderBottom: '1px solid var(--border-subtle)',
               backgroundColor: 'var(--bg-surface-elevated)',
+              flexWrap: 'wrap',
+              gap: '6px',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FileText size={15} color="var(--primary)" />
-              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+              <FileText size={15} color="var(--color-signet)" />
+              <span
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  letterSpacing: '-0.01em',
+                  color: 'var(--text-primary)',
+                }}
+              >
                 Original Draft
               </span>
             </div>
@@ -415,113 +457,173 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
               <button
                 onClick={() => fileInputRef.current?.click()}
                 title="Upload .txt or .md file"
+                aria-label="Upload document"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
-                  padding: '5px 9px',
+                  padding: '6px 10px',
+                  minHeight: '34px',
                   borderRadius: 'var(--radius-sm)',
                   border: '1px solid var(--border-subtle)',
                   backgroundColor: 'var(--bg-surface)',
                   color: 'var(--text-secondary)',
-                  fontSize: '11px',
+                  fontSize: '11.5px',
                   fontWeight: 500,
                   cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-signet-dim)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
                 }}
               >
                 <Upload size={12} />
-                Upload
+                <span>Upload</span>
               </button>
 
               <button
                 onClick={handlePaste}
                 title="Paste from clipboard"
+                aria-label="Paste text"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
-                  padding: '5px 9px',
+                  padding: '6px 10px',
+                  minHeight: '34px',
                   borderRadius: 'var(--radius-sm)',
                   border: '1px solid var(--border-subtle)',
                   backgroundColor: 'var(--bg-surface)',
                   color: 'var(--text-secondary)',
-                  fontSize: '11px',
+                  fontSize: '11.5px',
                   fontWeight: 500,
                   cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--color-signet-dim)';
+                  e.currentTarget.style.color = 'var(--text-primary)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  e.currentTarget.style.color = 'var(--text-secondary)';
                 }}
               >
                 <Clipboard size={12} />
-                Paste
+                <span>Paste</span>
               </button>
 
               <button
                 onClick={() => setInputText('')}
                 title="Clear input text"
+                aria-label="Clear text"
                 style={{
-                  padding: '5px 8px',
+                  padding: '6px 10px',
+                  minHeight: '34px',
+                  minWidth: '34px',
                   borderRadius: 'var(--radius-sm)',
                   border: '1px solid var(--border-subtle)',
                   backgroundColor: 'var(--bg-surface)',
-                  color: 'var(--danger)',
-                  fontSize: '11px',
+                  color: 'var(--color-correction)',
+                  fontSize: '11.5px',
                   cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--danger-border)';
+                  e.currentTarget.style.backgroundColor = 'var(--danger-bg)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                  e.currentTarget.style.backgroundColor = 'var(--bg-surface)';
                 }}
               >
-                <Trash2 size={12} />
+                <Trash2 size={13} />
               </button>
             </div>
           </div>
 
           {/* Text Area */}
           <textarea
+            className="studio-textarea"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Type or paste your content here to inspect, polish, and fix grammar..."
+            placeholder="Type or paste your text here to inspect, polish, and fix grammar..."
             style={{
               flex: 1,
-              padding: '20px',
+              minHeight: 0,
+              padding: '14px 16px',
               backgroundColor: 'transparent',
               border: 'none',
               color: 'var(--text-primary)',
-              fontSize: '15px',
-              lineHeight: '1.75',
+              fontSize: '14px',
+              lineHeight: '1.7',
               resize: 'none',
               outline: 'none',
-              fontFamily: 'var(--font-sans)',
+              fontFamily: 'var(--font-body)',
+              overflowY: 'auto',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
             }}
           />
 
-          {/* Footer Toolbar: Stats & CTA */}
+          {/* Footer Toolbar: Stats & Primary Polish CTA */}
           <div
             style={{
-              padding: '12px 18px',
+              minHeight: '52px',
+              flexShrink: 0,
+              padding: '8px 12px',
               borderTop: '1px solid var(--border-subtle)',
               backgroundColor: 'var(--bg-surface-elevated)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '8px',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: 'var(--text-muted)' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '11.5px',
+                color: 'var(--text-secondary)',
+              }}
+            >
               <span>{wordCount} words</span>
-              <span>·</span>
+              <span style={{ color: 'var(--border-strong)' }}>·</span>
               <span>{charCount} chars</span>
-              <span>·</span>
-              <span>~{estimatedReadTimeSecs}s read</span>
+              <span className="hide-on-mobile" style={{ color: 'var(--border-strong)' }}>·</span>
+              <span className="hide-on-mobile">~{estimatedReadTimeSecs}s read</span>
             </div>
 
             <button
               onClick={handleExecuteFix}
               disabled={loading || !inputText.trim()}
+              className="btn-touch-44"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                padding: '9px 20px',
+                padding: '8px 20px',
                 borderRadius: 'var(--radius-md)',
                 border: 'none',
-                backgroundColor: 'var(--primary)',
-                color: '#ffffff',
+                backgroundColor: 'var(--color-signet)',
+                color: '#15171B',
                 fontSize: '13px',
                 fontWeight: 700,
                 boxShadow: 'var(--shadow-sm)',
@@ -530,10 +632,14 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                if (!loading && inputText.trim()) e.currentTarget.style.backgroundColor = 'var(--primary-hover)';
+                if (!loading && inputText.trim()) {
+                  e.currentTarget.style.backgroundColor = 'var(--color-signet-dim)';
+                }
               }}
               onMouseLeave={(e) => {
-                if (!loading && inputText.trim()) e.currentTarget.style.backgroundColor = 'var(--primary)';
+                if (!loading && inputText.trim()) {
+                  e.currentTarget.style.backgroundColor = 'var(--color-signet)';
+                }
               }}
             >
               {loading ? (
@@ -541,29 +647,32 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
                   <div
                     className="animate-spin"
                     style={{
-                      width: '13px',
-                      height: '13px',
-                      border: '2px solid rgba(255,255,255,0.4)',
-                      borderTopColor: '#ffffff',
+                      width: '14px',
+                      height: '14px',
+                      border: '2px solid rgba(21,23,27,0.4)',
+                      borderTopColor: '#15171B',
                       borderRadius: '50%',
                     }}
                   />
-                  <span>Processing Draft...</span>
+                  <span>Processing...</span>
                 </>
               ) : (
                 <>
-                  <Play size={13} fill="#ffffff" />
+                  <Play size={13} fill="#15171B" />
                   <span>Fix & Polish</span>
                   <span
+                    className="hide-on-mobile"
                     style={{
+                      fontFamily: 'var(--font-mono)',
                       fontSize: '10px',
                       padding: '2px 5px',
                       borderRadius: 'var(--radius-sm)',
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      backgroundColor: 'rgba(21, 23, 27, 0.15)',
                       marginLeft: '2px',
+                      fontWeight: 600,
                     }}
                   >
-                    ⌘↵
+                    Ctrl+↵
                   </span>
                 </>
               )}
@@ -572,73 +681,81 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
         </div>
 
         {/* Right Pane: Multi-View Output Studio */}
-        <div
-          className="premium-card"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            overflow: 'hidden',
-          }}
-        >
+        <div className="premium-card studio-pane" style={{ display: 'flex', flexDirection: 'column', width: '100%', maxWidth: '100%', boxSizing: 'border-box', overflow: 'hidden' }}>
           {/* Studio Navigation Tabs */}
           <div
+            className="touch-scroll-x"
             style={{
+              height: '44px',
+              minHeight: '44px',
+              flexShrink: 0,
               display: 'flex',
               borderBottom: '1px solid var(--border-subtle)',
               backgroundColor: 'var(--bg-surface-elevated)',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
             }}
           >
             <button
               onClick={() => setActiveTab('diff')}
               style={{
-                flex: 1,
-                padding: '12px 14px',
+                flex: '1 0 auto',
+                minWidth: '100px',
+                padding: '0 14px',
                 border: 'none',
                 background: 'none',
-                fontWeight: activeTab === 'diff' ? 700 : 500,
-                color: activeTab === 'diff' ? 'var(--primary)' : 'var(--text-secondary)',
-                borderBottom: activeTab === 'diff' ? '2px solid var(--primary)' : '2px solid transparent',
-                fontSize: '13px',
+                fontWeight: activeTab === 'diff' ? 600 : 500,
+                color: activeTab === 'diff' ? 'var(--color-signet)' : 'var(--text-secondary)',
+                borderBottom: activeTab === 'diff' ? '2px solid var(--color-signet)' : '2px solid transparent',
+                fontSize: '12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '6px',
                 cursor: 'pointer',
+                minHeight: '44px',
+                transition: 'all 0.15s ease',
               }}
             >
-              <Feather size={14} />
-              <span>AI Output & Diff</span>
+              <FileText size={13} />
+              <span>Editorial Output</span>
             </button>
 
             <button
               onClick={() => setActiveTab('mistakes')}
               style={{
-                flex: 1,
-                padding: '12px 14px',
+                flex: '1 0 auto',
+                minWidth: '100px',
+                padding: '0 14px',
                 border: 'none',
                 background: 'none',
-                fontWeight: activeTab === 'mistakes' ? 700 : 500,
-                color: activeTab === 'mistakes' ? 'var(--primary)' : 'var(--text-secondary)',
-                borderBottom: activeTab === 'mistakes' ? '2px solid var(--primary)' : '2px solid transparent',
-                fontSize: '13px',
+                fontWeight: activeTab === 'mistakes' ? 600 : 500,
+                color: activeTab === 'mistakes' ? 'var(--color-signet)' : 'var(--text-secondary)',
+                borderBottom: activeTab === 'mistakes' ? '2px solid var(--color-signet)' : '2px solid transparent',
+                fontSize: '12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '6px',
                 cursor: 'pointer',
+                minHeight: '44px',
+                transition: 'all 0.15s ease',
               }}
             >
-              <CheckCircle2 size={14} />
-              <span>Mistakes</span>
+              <CheckCheck size={13} />
+              <span>Flags & Errors</span>
               {mistakes.length > 0 && (
                 <span
                   style={{
+                    fontFamily: 'var(--font-mono)',
                     padding: '1px 6px',
                     borderRadius: 'var(--radius-full)',
                     backgroundColor: 'var(--danger-bg)',
-                    color: 'var(--danger)',
+                    border: '1px solid var(--danger-border)',
+                    color: 'var(--color-correction)',
                     fontSize: '10px',
-                    fontWeight: 700,
+                    fontWeight: 600,
                   }}
                 >
                   {mistakes.length}
@@ -649,45 +766,51 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
             <button
               onClick={() => setActiveTab('analytics')}
               style={{
-                flex: 1,
-                padding: '12px 14px',
+                flex: '1 0 auto',
+                minWidth: '100px',
+                padding: '0 14px',
                 border: 'none',
                 background: 'none',
-                fontWeight: activeTab === 'analytics' ? 700 : 500,
-                color: activeTab === 'analytics' ? 'var(--primary)' : 'var(--text-secondary)',
-                borderBottom: activeTab === 'analytics' ? '2px solid var(--primary)' : '2px solid transparent',
-                fontSize: '13px',
+                fontWeight: activeTab === 'analytics' ? 600 : 500,
+                color: activeTab === 'analytics' ? 'var(--color-signet)' : 'var(--text-secondary)',
+                borderBottom: activeTab === 'analytics' ? '2px solid var(--color-signet)' : '2px solid transparent',
+                fontSize: '12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '6px',
                 cursor: 'pointer',
+                minHeight: '44px',
+                transition: 'all 0.15s ease',
               }}
             >
-              <BarChart3 size={14} />
+              <BarChart3 size={13} />
               <span>Diagnostics</span>
             </button>
 
             <button
               onClick={() => setActiveTab('tone')}
               style={{
-                flex: 1,
-                padding: '12px 14px',
+                flex: '1 0 auto',
+                minWidth: '100px',
+                padding: '0 14px',
                 border: 'none',
                 background: 'none',
-                fontWeight: activeTab === 'tone' ? 700 : 500,
-                color: activeTab === 'tone' ? 'var(--primary)' : 'var(--text-secondary)',
-                borderBottom: activeTab === 'tone' ? '2px solid var(--primary)' : '2px solid transparent',
-                fontSize: '13px',
+                fontWeight: activeTab === 'tone' ? 600 : 500,
+                color: activeTab === 'tone' ? 'var(--color-signet)' : 'var(--text-secondary)',
+                borderBottom: activeTab === 'tone' ? '2px solid var(--color-signet)' : '2px solid transparent',
+                fontSize: '12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '6px',
                 cursor: 'pointer',
+                minHeight: '44px',
+                transition: 'all 0.15s ease',
               }}
             >
-              <Sliders size={14} />
-              <span>Tone Tuner</span>
+              <Sliders size={13} />
+              <span>Persona Calibrator</span>
             </button>
           </div>
 
@@ -695,44 +818,46 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
           {error && (
             <div
               style={{
-                margin: '14px 16px 0',
-                padding: '12px 16px',
+                margin: '10px 14px 0',
+                padding: '10px 14px',
                 borderRadius: 'var(--radius-md)',
                 backgroundColor: 'var(--danger-bg)',
                 border: '1px solid var(--danger-border)',
-                color: 'var(--danger)',
-                fontSize: '13px',
+                color: 'var(--color-correction)',
+                fontSize: '12px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                flexShrink: 0,
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertCircle size={16} />
+                <AlertCircle size={15} />
                 <span>{error}</span>
               </div>
               {requiresKeyModal && (
                 <button
                   onClick={onOpenSettings}
                   style={{
-                    padding: '5px 12px',
+                    padding: '6px 12px',
                     borderRadius: 'var(--radius-sm)',
                     border: 'none',
-                    backgroundColor: 'var(--primary)',
-                    color: '#ffffff',
+                    backgroundColor: 'var(--color-signet)',
+                    color: '#15171B',
                     fontSize: '11px',
                     fontWeight: 700,
                     cursor: 'pointer',
+                    minHeight: '34px',
                   }}
                 >
-                  Configure API Key
+                  Configure Key
                 </button>
               )}
             </div>
           )}
 
           {/* Tab Content Body */}
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="studio-tab-body" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
             {activeTab === 'diff' && (
               <DiffViewer
                 originalText={inputText}
@@ -740,7 +865,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
                 onApplyToInput={() => {
                   if (correctedText) {
                     setInputText(correctedText);
-                    showToast('Applied corrected text to input draft');
+                    showToast('Applied corrected output to input draft');
                   }
                 }}
               />
@@ -763,7 +888,7 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
             )}
 
             {activeTab === 'tone' && (
-              <div style={{ padding: '20px' }}>
+              <div style={{ padding: '16px' }}>
                 <ToneCustomizer
                   preferences={settings.tonePreferences}
                   onChange={(newPref) => {

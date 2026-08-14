@@ -26,8 +26,8 @@ class WebOrchestrator {
   private languageToolProvider = new LanguageToolProvider();
   private heuristicProvider = new OfflineHeuristicProvider();
 
-  private getCacheKey(text: string, mode: string, provider: string): string {
-    return `${provider}::${mode}::${text.trim()}`;
+  private getCacheKey(text: string, mode: string, toneModifier: string | undefined, provider: string): string {
+    return `${provider}::${mode}::${toneModifier || 'none'}::${text.trim()}`;
   }
 
   async correct(
@@ -35,7 +35,7 @@ class WebOrchestrator {
     settings: WebSettings,
     onStatusUpdate?: (status: string) => void
   ): Promise<CorrectionResponse> {
-    const isGrammarMode = request.mode === 'grammar_only' || request.mode === 'grammar_punctuation';
+    const isGrammarMode = (request.mode === 'grammar' || request.mode === 'grammar_only' || request.mode === 'grammar_punctuation') && !request.toneModifier;
     let targetProvider: WebProvider = settings.activeProvider;
 
     // Auto-detect if user wants AI mode but active provider is languagetool
@@ -46,7 +46,7 @@ class WebOrchestrator {
       }
     }
 
-    const cacheKey = this.getCacheKey(request.text, request.mode, targetProvider);
+    const cacheKey = this.getCacheKey(request.text, request.mode, request.toneModifier, targetProvider);
     const cached = this.cache.get(cacheKey);
     if (cached && Date.now() - cached.timestamp < 1000 * 60 * 30) {
       onStatusUpdate?.('Loaded from instant cache');

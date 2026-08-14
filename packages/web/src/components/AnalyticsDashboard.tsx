@@ -1,15 +1,8 @@
 import React from 'react';
 import { computeTextStats, computeWritingScore, TextStats } from '@writefix/core';
 import {
-  BarChart3,
   Clock,
   Mic,
-  BookOpen,
-  CheckCircle2,
-  TrendingUp,
-  Award,
-  Layers,
-  Sparkles,
 } from 'lucide-react';
 
 interface AnalyticsDashboardProps {
@@ -46,11 +39,11 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   const scoreDelta = scoreAfter - scoreBefore;
 
   const getGradeInterpretation = (grade: number) => {
-    if (grade <= 6) return 'Elementary (Easy reading)';
-    if (grade <= 8) return 'Middle School (Standard conversational)';
-    if (grade <= 12) return 'High School (Clear business tone)';
-    if (grade <= 16) return 'College / Professional';
-    return 'Scholarly / Specialized (Complex)';
+    if (grade <= 6) return 'Elementary (Accessible)';
+    if (grade <= 8) return 'Middle School (Conversational)';
+    if (grade <= 12) return 'High School (Clear Business)';
+    if (grade <= 16) return 'College / Executive Professional';
+    return 'Scholarly / Specialized';
   };
 
   const avgWordsPerSentence =
@@ -89,6 +82,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           backgroundColor: 'var(--bg-surface-elevated)',
           flexWrap: 'wrap',
           gap: '16px',
+          border: '1px solid var(--color-signet-dim)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
@@ -98,7 +92,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
               width: '60px',
               height: '60px',
               borderRadius: '50%',
-              background: `conic-gradient(var(--success) ${scoreAfter}%, var(--border-subtle) 0)`,
+              background: `conic-gradient(var(--color-signet) ${scoreAfter}%, var(--border-subtle) 0)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -114,10 +108,10 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontWeight: 800,
+                fontWeight: 700,
                 fontSize: '18px',
                 color: 'var(--text-primary)',
-                fontFamily: 'var(--font-heading)',
+                fontFamily: 'var(--font-mono)',
               }}
             >
               {scoreAfter}
@@ -126,39 +120,65 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontWeight: 700, fontSize: '16px', color: 'var(--text-primary)' }}>
+              <span
+                style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 600,
+                  fontSize: '16px',
+                  color: 'var(--text-primary)',
+                }}
+              >
                 Writing Quality Score
               </span>
               {scoreDelta > 0 && (
                 <span
                   style={{
+                    fontFamily: 'var(--font-mono)',
                     fontSize: '11px',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     padding: '2px 7px',
-                    borderRadius: 'var(--radius-full)',
+                    borderRadius: 'var(--radius-sm)',
                     backgroundColor: 'var(--success-bg)',
-                    color: 'var(--success)',
+                    color: 'var(--color-confirmed)',
+                    border: '1px solid var(--success-border)',
                   }}
                 >
                   +{scoreDelta} pts improved
                 </span>
               )}
             </div>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-              Based on grammar precision, sentence flow, and lexical structure.
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+              Evaluated across grammatical rigor, cadence balance, and readability indices.
             </p>
           </div>
         </div>
 
         {/* Readability Grade Pillar */}
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>
+          <div
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '10.5px',
+              color: 'var(--text-muted)',
+              textTransform: 'uppercase',
+              fontWeight: 600,
+              letterSpacing: '0.06em',
+            }}
+          >
             Readability Grade
           </div>
-          <div style={{ fontWeight: 800, fontSize: '18px', color: 'var(--primary)', marginTop: '2px' }}>
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: '18px',
+              color: 'var(--color-signet)',
+              marginTop: '2px',
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
             Grade {afterStats.fleschKincaidGrade}
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '11.5px', color: 'var(--text-secondary)' }}>
             {getGradeInterpretation(afterStats.fleschKincaidGrade)}
           </div>
         </div>
@@ -194,12 +214,12 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         <MetricTile
           label="Silent Reading"
           value={formatDuration(afterStats.readingTimeSec)}
-          icon={<Clock size={13} color="var(--primary)" />}
+          icon={<Clock size={13} color="var(--color-signet)" />}
         />
         <MetricTile
-          label="Speaking Time"
+          label="Speaking Cadence"
           value={formatDuration(speakingTimeSeconds)}
-          icon={<Mic size={13} color="var(--accent-amber)" />}
+          icon={<Mic size={13} color="var(--color-signet-dim)" />}
         />
       </div>
 
@@ -211,23 +231,31 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
+          backgroundColor: 'var(--bg-surface)',
         }}
       >
-        <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
-          Structural Diagnostics & Clarity
+        <div
+          style={{
+            fontFamily: 'var(--font-display)',
+            fontSize: '14px',
+            fontWeight: 600,
+            color: 'var(--text-primary)',
+          }}
+        >
+          Structural Diagnostics & Clarity Index
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <DiagnosticRow
-            label="Reading Level Assessment"
+            label="Reading Level Classification"
             score={afterStats.readingLevel}
-            rating={afterStats.readingLevel === 'Intermediate' ? 'Optimal for General Audience' : afterStats.readingLevel}
+            rating={afterStats.readingLevel === 'Intermediate' ? 'Optimal for General Readership' : afterStats.readingLevel}
             isPositive={true}
           />
           <DiagnosticRow
-            label="Grammar & Syntax Errors"
+            label="Grammar & Syntax Integrity"
             score={`${mistakesCount} issues found`}
-            rating={mistakesCount === 0 ? 'Flawless' : `${mistakesCount} unaddressed`}
+            rating={mistakesCount === 0 ? 'Verified Clean' : `${mistakesCount} unaddressed`}
             isPositive={mistakesCount === 0}
           />
         </div>
@@ -250,24 +278,42 @@ const MetricTile: React.FC<{
       flexDirection: 'column',
       gap: '4px',
       backgroundColor: 'var(--bg-surface-elevated)',
+      border: '1px solid var(--border-subtle)',
     }}
   >
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+      <span
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '10px',
+          color: 'var(--text-muted)',
+          fontWeight: 600,
+          textTransform: 'uppercase',
+          letterSpacing: '0.04em',
+        }}
+      >
         {label}
       </span>
       {icon}
     </div>
     <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
-      <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
+      <span
+        style={{
+          fontSize: '18px',
+          fontWeight: 700,
+          color: 'var(--text-primary)',
+          fontFamily: 'var(--font-mono)',
+        }}
+      >
         {value}
       </span>
       {delta !== undefined && delta !== 0 && (
         <span
           style={{
+            fontFamily: 'var(--font-mono)',
             fontSize: '11px',
-            fontWeight: 700,
-            color: delta > 0 ? 'var(--success)' : 'var(--danger)',
+            fontWeight: 600,
+            color: delta > 0 ? 'var(--color-confirmed)' : 'var(--color-correction)',
           }}
         >
           {delta > 0 ? `+${delta}` : delta}
@@ -288,7 +334,7 @@ const DiagnosticRow: React.FC<{
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: '8px 12px',
+      padding: '8px 14px',
       borderRadius: 'var(--radius-sm)',
       backgroundColor: 'var(--bg-surface-elevated)',
       border: '1px solid var(--border-subtle)',
@@ -300,25 +346,27 @@ const DiagnosticRow: React.FC<{
           width: '6px',
           height: '6px',
           borderRadius: '50%',
-          backgroundColor: isPositive ? 'var(--success)' : 'var(--warning)',
+          backgroundColor: isPositive ? 'var(--color-confirmed)' : 'var(--warning)',
         }}
       />
-      <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500 }}>
+      <span style={{ fontSize: '12.5px', color: 'var(--text-secondary)', fontWeight: 500 }}>
         {label}
       </span>
     </div>
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+      <span style={{ fontSize: '11.5px', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
         {score}
       </span>
       <span
         style={{
-          fontSize: '11px',
-          fontWeight: 700,
+          fontFamily: 'var(--font-mono)',
+          fontSize: '10.5px',
+          fontWeight: 600,
           padding: '2px 8px',
-          borderRadius: 'var(--radius-full)',
+          borderRadius: 'var(--radius-sm)',
           backgroundColor: isPositive ? 'var(--success-bg)' : 'var(--warning-bg)',
-          color: isPositive ? 'var(--success)' : 'var(--warning)',
+          color: isPositive ? 'var(--color-confirmed)' : 'var(--warning)',
+          border: `1px solid ${isPositive ? 'var(--success-border)' : 'var(--warning-border)'}`,
         }}
       >
         {rating}

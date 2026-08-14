@@ -3,11 +3,15 @@
  */
 
 export type CorrectionMode =
+  | 'grammar'
+  | 'professional'
+  | 'humanize'
+  | 'concise'
+  | 'academic'
+  | 'indian-professional'
   | 'grammar_only'
   | 'grammar_punctuation'
   | 'natural'
-  | 'professional'
-  | 'humanize'
   | 'simple'
   | 'polite'
   | 'short'
@@ -46,9 +50,10 @@ export interface Settings {
 export interface Mistake {
   type: string;
   description: string;
+  explanation?: string;
   original: string;
   replacement: string;
-  category: 'grammar' | 'spelling' | 'punctuation' | 'capitalization';
+  category: 'grammar' | 'spelling' | 'punctuation' | 'capitalization' | 'style' | string;
 }
 
 export interface HistoryEntry {

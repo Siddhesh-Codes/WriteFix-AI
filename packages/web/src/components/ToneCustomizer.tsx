@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sliders, Sparkles, Briefcase, Smile, BookOpen, MessageSquare, RotateCcw } from 'lucide-react';
+import { Sliders, Briefcase, Smile, BookOpen, MessageSquare, RotateCcw } from 'lucide-react';
 import { WebSettings } from '../types';
 
 interface ToneCustomizerProps {
@@ -25,7 +25,7 @@ const TONE_PRESETS = [
   },
   {
     name: 'Balanced Natural',
-    icon: <Sparkles size={13} />,
+    icon: <MessageSquare size={13} />,
     values: { formality: 50, conciseness: 50, creativity: 50 },
   },
 ];
@@ -56,12 +56,22 @@ export const ToneCustomizer: React.FC<ToneCustomizerProps> = ({
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
-            <Sliders size={16} color="var(--primary)" />
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontFamily: 'var(--font-display)',
+              fontWeight: 600,
+              fontSize: '15px',
+              color: 'var(--text-primary)',
+            }}
+          >
+            <Sliders size={16} color="var(--color-signet)" />
             <span>Tone & Persona Calibrator</span>
           </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
-            Fine-tune how the AI shapes phrasing, vocabulary, and sentence rhythm.
+          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+            Fine-tune how the AI shapes phrasing, vocabulary, and sentence cadence.
           </p>
         </div>
 
@@ -79,6 +89,15 @@ export const ToneCustomizer: React.FC<ToneCustomizerProps> = ({
             color: 'var(--text-secondary)',
             fontSize: '11px',
             cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-signet-dim)';
+            e.currentTarget.style.color = 'var(--text-primary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--border-subtle)';
+            e.currentTarget.style.color = 'var(--text-secondary)';
           }}
         >
           <RotateCcw size={12} />
@@ -88,7 +107,17 @@ export const ToneCustomizer: React.FC<ToneCustomizerProps> = ({
 
       {/* Quick Presets */}
       <div>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>
+        <div
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '10.5px',
+            fontWeight: 600,
+            color: 'var(--text-muted)',
+            textTransform: 'uppercase',
+            marginBottom: '8px',
+            letterSpacing: '0.05em',
+          }}
+        >
           One-Click Presets:
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
@@ -106,12 +135,12 @@ export const ToneCustomizer: React.FC<ToneCustomizerProps> = ({
                 backgroundColor: 'var(--bg-surface-elevated)',
                 color: 'var(--text-primary)',
                 fontSize: '12px',
-                fontWeight: 600,
+                fontWeight: 500,
                 cursor: 'pointer',
                 transition: 'all 0.15s ease',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'var(--primary)';
+                e.currentTarget.style.borderColor = 'var(--color-signet)';
                 e.currentTarget.style.backgroundColor = 'var(--bg-surface-hover)';
               }}
               onMouseLeave={(e) => {
@@ -119,7 +148,7 @@ export const ToneCustomizer: React.FC<ToneCustomizerProps> = ({
                 e.currentTarget.style.backgroundColor = 'var(--bg-surface-elevated)';
               }}
             >
-              <span style={{ color: 'var(--primary)' }}>{preset.icon}</span>
+              <span style={{ color: 'var(--color-signet)' }}>{preset.icon}</span>
               <span>{preset.name}</span>
             </button>
           ))}
@@ -140,17 +169,19 @@ export const ToneCustomizer: React.FC<ToneCustomizerProps> = ({
         {/* Formality Slider */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
               Formality & Register
             </span>
             <span
               style={{
+                fontFamily: 'var(--font-mono)',
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 600,
                 padding: '2px 8px',
-                borderRadius: 'var(--radius-full)',
+                borderRadius: 'var(--radius-sm)',
                 backgroundColor: 'var(--primary-subtle)',
-                color: 'var(--primary)',
+                color: 'var(--color-signet)',
+                border: '1px solid var(--primary-border)',
               }}
             >
               {preferences.formality < 35 ? 'Casual / Conversational' : preferences.formality > 65 ? 'Executive / Formal' : 'Balanced'}
@@ -173,17 +204,19 @@ export const ToneCustomizer: React.FC<ToneCustomizerProps> = ({
         {/* Conciseness Slider */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
               Conciseness & Length
             </span>
             <span
               style={{
+                fontFamily: 'var(--font-mono)',
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 600,
                 padding: '2px 8px',
-                borderRadius: 'var(--radius-full)',
+                borderRadius: 'var(--radius-sm)',
                 backgroundColor: 'var(--primary-subtle)',
-                color: 'var(--primary)',
+                color: 'var(--color-signet)',
+                border: '1px solid var(--primary-border)',
               }}
             >
               {preferences.conciseness < 35 ? 'Detailed & Descriptive' : preferences.conciseness > 65 ? 'Ultra-Concise' : 'Standard Length'}
@@ -206,17 +239,19 @@ export const ToneCustomizer: React.FC<ToneCustomizerProps> = ({
         {/* Warmth & Expression Slider */}
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text-primary)' }}>
               Warmth & Expressiveness
             </span>
             <span
               style={{
+                fontFamily: 'var(--font-mono)',
                 fontSize: '11px',
-                fontWeight: 700,
+                fontWeight: 600,
                 padding: '2px 8px',
-                borderRadius: 'var(--radius-full)',
+                borderRadius: 'var(--radius-sm)',
                 backgroundColor: 'var(--primary-subtle)',
-                color: 'var(--primary)',
+                color: 'var(--color-signet)',
+                border: '1px solid var(--primary-border)',
               }}
             >
               {preferences.creativity < 35 ? 'Direct & Factual' : preferences.creativity > 65 ? 'Warm & Expressive' : 'Natural'}

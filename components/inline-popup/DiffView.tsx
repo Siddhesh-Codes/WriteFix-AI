@@ -14,8 +14,8 @@ export const DiffView: React.FC<DiffViewProps> = ({ originalText, correctedText,
 
   return (
     <div style={{
-      fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-      fontSize: '14px',
+      fontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
+      fontSize: '13.5px',
       lineHeight: '1.6',
       padding: '14px',
       borderRadius: '8px',
@@ -33,11 +33,11 @@ export const DiffView: React.FC<DiffViewProps> = ({ originalText, correctedText,
             <span
               key={idx}
               style={{
-                backgroundColor: themeColors.isDark ? '#7f1d1d' : '#fee2e2',
-                color: themeColors.isDark ? '#fca5a5' : '#991b1b',
+                backgroundColor: 'rgba(190, 91, 61, 0.18)',
+                color: '#BE5B3D',
                 textDecoration: 'line-through',
                 padding: '2px 4px',
-                borderRadius: '4px',
+                borderRadius: '3px',
                 margin: '0 1px'
               }}
             >
@@ -50,11 +50,11 @@ export const DiffView: React.FC<DiffViewProps> = ({ originalText, correctedText,
             <span
               key={idx}
               style={{
-                backgroundColor: themeColors.isDark ? '#064e3b' : '#dcfce7',
-                color: themeColors.isDark ? '#6ee7b7' : '#166534',
-                fontWeight: 500,
+                backgroundColor: 'rgba(122, 148, 113, 0.18)',
+                color: '#7A9471',
+                fontWeight: 600,
                 padding: '2px 4px',
-                borderRadius: '4px',
+                borderRadius: '3px',
                 margin: '0 1px'
               }}
             >

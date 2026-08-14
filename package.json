@@ -18,7 +18,8 @@
     "dev:web": "vite packages/web",
     "build:web": "node scripts/build-web.js",
     "preview:web": "vite preview packages/web",
-    "compile": "tsc --noEmit"
+    "compile": "tsc --noEmit",
+    "test:core": "vite-node packages/core/test/prompt-engine.test.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^4.3.4",
@@ -37,6 +38,7 @@
     "@types/react-dom": "^19.0.2",
     "@wxt-dev/module-react": "^1.1.2",
     "autoprefixer": "^10.4.20",
+    "playwright": "^1.62.1",
     "postcss": "^8.4.49",
     "tailwindcss": "^4.0.0-beta.8",
     "typescript": "^5.7.2"
