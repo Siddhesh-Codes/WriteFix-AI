@@ -9,14 +9,14 @@
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt --target firefox",
-    "build": "vite build packages/web",
+    "build": "node scripts/build-web.js",
     "build:ext": "wxt build",
     "build:extension": "wxt build",
     "build:firefox": "wxt build --target firefox",
     "zip": "wxt zip",
     "zip:firefox": "wxt zip --target firefox",
     "dev:web": "vite packages/web",
-    "build:web": "vite build packages/web",
+    "build:web": "node scripts/build-web.js",
     "preview:web": "vite preview packages/web",
     "compile": "tsc --noEmit"
   },

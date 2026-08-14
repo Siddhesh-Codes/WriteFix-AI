@@ -1,5 +1,5 @@
 {
-  "buildCommand": "node scripts/build-web.js",
+  "buildCommand": "vite build",
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
