@@ -7,8 +7,8 @@ import { HistoryDrawer } from './components/HistoryDrawer';
 import { SettingsModal } from './components/SettingsModal';
 
 export default function App() {
-  const [settings, setSettings] = useState<WebSettings>(WebStorage.getSettings());
-  const [historyCount, setHistoryCount] = useState<number>(WebStorage.getHistory().length);
+  const [settings, setSettings] = useState<WebSettings>(() => WebStorage.getSettings());
+  const [historyCount, setHistoryCount] = useState<number>(() => WebStorage.getHistory().length);
   const [isSettingsOpen, setIsSettingsOpen] = useState<boolean>(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
   const [restoredText, setRestoredText] = useState<{ original: string; corrected: string; mode: any } | null>(null);
@@ -17,6 +17,11 @@ export default function App() {
     const savedTheme = localStorage.getItem('writefix_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
   }, []);
+
+  const handleUpdateSettings = (newSettings: WebSettings) => {
+    setSettings(newSettings);
+    WebStorage.saveSettings(newSettings);
+  };
 
   const handleRestoreFromHistory = (item: HistoryItem) => {
     setRestoredText({
@@ -41,10 +46,7 @@ export default function App() {
         <StudioEditor
           settings={settings}
           onOpenSettings={() => setIsSettingsOpen(true)}
-          onSettingsChange={(newSettings) => {
-            setSettings(newSettings);
-            WebStorage.saveSettings(newSettings);
-          }}
+          onSettingsChange={handleUpdateSettings}
           onHistoryUpdated={() => setHistoryCount(WebStorage.getHistory().length)}
           restoredText={restoredText}
         />
@@ -63,7 +65,7 @@ export default function App() {
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         settings={settings}
-        onSave={(newSettings) => setSettings(newSettings)}
+        onSave={handleUpdateSettings}
       />
     </div>
   );

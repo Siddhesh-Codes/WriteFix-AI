@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WebSettings, WebProvider } from '../types';
-import { WebStorage } from '../services/storage';
+import { WebStorage, DEFAULT_WEB_SETTINGS } from '../services/storage';
 import {
   X,
   Key,
@@ -79,20 +79,62 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   settings,
   onSave,
 }) => {
-  const [form, setForm] = useState<WebSettings>({ ...settings });
+  const [form, setForm] = useState<WebSettings>(() => ({
+    ...DEFAULT_WEB_SETTINGS,
+    ...settings,
+    apiKeys: { ...DEFAULT_WEB_SETTINGS.apiKeys, ...(settings.apiKeys || {}) },
+    selectedModels: { ...DEFAULT_WEB_SETTINGS.selectedModels, ...(settings.selectedModels || {}) },
+    tonePreferences: { ...DEFAULT_WEB_SETTINGS.tonePreferences, ...(settings.tonePreferences || {}) },
+  }));
   const [activeTab, setActiveTab] = useState<'providers' | 'models' | 'general'>('providers');
   const [showKeys, setShowKeys] = useState<Record<string, boolean>>({});
   const [testStatus, setTestStatus] = useState<Record<string, 'idle' | 'testing' | 'success' | 'error'>>({});
   const [testMessage, setTestMessage] = useState<Record<string, string>>({});
+  const [savedBadge, setSavedBadge] = useState<boolean>(false);
+
+  // Sync state whenever modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      const freshSettings = WebStorage.getSettings();
+      setForm(freshSettings);
+      setSavedBadge(false);
+    }
+  }, [isOpen, settings]);
+
+  const updateAndPersist = (updated: WebSettings) => {
+    setForm(updated);
+    WebStorage.saveSettings(updated);
+    onSave(updated);
+  };
 
   const handleKeyChange = (provider: string, val: string) => {
-    setForm({
+    const updated: WebSettings = {
       ...form,
       apiKeys: {
         ...form.apiKeys,
         [provider]: val,
       },
-    });
+    };
+    updateAndPersist(updated);
+  };
+
+  const handleProviderChange = (provider: WebProvider) => {
+    const updated: WebSettings = {
+      ...form,
+      activeProvider: provider,
+    };
+    updateAndPersist(updated);
+  };
+
+  const handleModelChange = (provider: string, model: string) => {
+    const updated: WebSettings = {
+      ...form,
+      selectedModels: {
+        ...form.selectedModels,
+        [provider]: model,
+      },
+    };
+    updateAndPersist(updated);
   };
 
   const toggleShowKey = (provider: string) => {
@@ -126,6 +168,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         if (valid) {
           setTestStatus({ ...testStatus, [provider]: 'success' });
           setTestMessage({ ...testMessage, [provider]: `Connected! (${latency}ms)` });
+          // Ensure tested key is saved
+          updateAndPersist(form);
         } else {
           setTestStatus({ ...testStatus, [provider]: 'error' });
           setTestMessage({ ...testMessage, [provider]: 'API key validation returned false.' });
@@ -138,9 +182,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   const handleSave = () => {
-    WebStorage.saveSettings(form);
-    onSave(form);
-    onClose();
+    updateAndPersist(form);
+    setSavedBadge(true);
+    setTimeout(() => {
+      onClose();
+    }, 200);
   };
 
   if (!isOpen) return null;
@@ -313,7 +359,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div style={{ position: 'relative', width: '100%' }}>
                   <select
                     value={form.activeProvider}
-                    onChange={(e) => setForm({ ...form, activeProvider: e.target.value as WebProvider })}
+                    onChange={(e) => handleProviderChange(e.target.value as WebProvider)}
                     style={getSelectStyle()}
                   >
                     <option value="languagetool">LanguageTool (Free, Zero Setup, Grammar Only)</option>
@@ -523,7 +569,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div style={{ position: 'relative', width: '100%' }}>
                   <select
                     value={form.selectedModels.gemini}
-                    onChange={(e) => setForm({ ...form, selectedModels: { ...form.selectedModels, gemini: e.target.value } })}
+                    onChange={(e) => handleModelChange('gemini', e.target.value)}
                     style={getSelectStyle()}
                   >
                     <option value="gemini-2.5-flash">gemini-2.5-flash (Fast & High Precision)</option>
@@ -551,7 +597,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div style={{ position: 'relative', width: '100%' }}>
                   <select
                     value={form.selectedModels.groq}
-                    onChange={(e) => setForm({ ...form, selectedModels: { ...form.selectedModels, groq: e.target.value } })}
+                    onChange={(e) => handleModelChange('groq', e.target.value)}
                     style={getSelectStyle()}
                   >
                     <option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (Recommended)</option>
@@ -579,7 +625,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div style={{ position: 'relative', width: '100%' }}>
                   <select
                     value={form.selectedModels.openai}
-                    onChange={(e) => setForm({ ...form, selectedModels: { ...form.selectedModels, openai: e.target.value } })}
+                    onChange={(e) => handleModelChange('openai', e.target.value)}
                     style={getSelectStyle()}
                   >
                     <option value="gpt-4o-mini">gpt-4o-mini (Economical & Fast)</option>
@@ -606,7 +652,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <div style={{ position: 'relative', width: '100%' }}>
                   <select
                     value={form.selectedModels.anthropic}
-                    onChange={(e) => setForm({ ...form, selectedModels: { ...form.selectedModels, anthropic: e.target.value } })}
+                    onChange={(e) => handleModelChange('anthropic', e.target.value)}
                     style={getSelectStyle()}
                   >
                     <option value="claude-3-5-haiku-20241022">claude-3-5-haiku (Fast Cadence)</option>
@@ -655,7 +701,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   max="3000"
                   step="100"
                   value={form.debounceMs}
-                  onChange={(e) => setForm({ ...form, debounceMs: parseInt(e.target.value) || 600 })}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 600;
+                    updateAndPersist({ ...form, debounceMs: val });
+                  }}
                   style={{
                     width: '80px',
                     padding: '6px 10px',

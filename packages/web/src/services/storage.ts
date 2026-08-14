@@ -13,7 +13,7 @@ export const DEFAULT_WEB_SETTINGS: WebSettings = {
     openrouter: '',
   },
   selectedModels: {
-    gemini: 'gemini-1.5-flash',
+    gemini: 'gemini-2.5-flash',
     groq: 'llama-3.3-70b-versatile',
     openai: 'gpt-4o-mini',
     anthropic: 'claude-3-5-sonnet-20241022',
@@ -35,7 +35,23 @@ export class WebStorage {
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
       if (raw) {
-        return { ...DEFAULT_WEB_SETTINGS, ...JSON.parse(raw) };
+        const parsed = JSON.parse(raw);
+        return {
+          ...DEFAULT_WEB_SETTINGS,
+          ...parsed,
+          apiKeys: {
+            ...DEFAULT_WEB_SETTINGS.apiKeys,
+            ...(parsed.apiKeys || {}),
+          },
+          selectedModels: {
+            ...DEFAULT_WEB_SETTINGS.selectedModels,
+            ...(parsed.selectedModels || {}),
+          },
+          tonePreferences: {
+            ...DEFAULT_WEB_SETTINGS.tonePreferences,
+            ...(parsed.tonePreferences || {}),
+          },
+        };
       }
     } catch (e) {
       console.warn('Failed to parse settings from storage', e);
@@ -45,7 +61,24 @@ export class WebStorage {
 
   static saveSettings(settings: WebSettings): void {
     try {
-      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+      const current = this.getSettings();
+      const merged: WebSettings = {
+        ...current,
+        ...settings,
+        apiKeys: {
+          ...current.apiKeys,
+          ...(settings.apiKeys || {}),
+        },
+        selectedModels: {
+          ...current.selectedModels,
+          ...(settings.selectedModels || {}),
+        },
+        tonePreferences: {
+          ...current.tonePreferences,
+          ...(settings.tonePreferences || {}),
+        },
+      };
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(merged));
     } catch (e) {
       console.error('Failed to save settings', e);
     }

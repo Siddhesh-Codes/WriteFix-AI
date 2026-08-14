@@ -180,6 +180,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           <button
             onClick={onOpenSettings}
             title="Settings & Provider"
+            aria-label="Settings & Provider"
+            data-testid="settings-trigger-btn"
             style={{
               width: '34px',
               height: '34px',
