@@ -1,6 +1,21 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
-import { Check, Copy, Settings, Lock, BarChart2, RefreshCw, AlertCircle, X } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  Settings,
+  Lock,
+  BarChart2,
+  RefreshCw,
+  AlertCircle,
+  X,
+  CheckCheck,
+  Briefcase,
+  GraduationCap,
+  Minimize2,
+  MessageSquareQuote,
+  Sparkles,
+} from 'lucide-react';
 import { DOMRectJSON } from '../../lib/selection/detector';
 import { CorrectionMode, Mistake } from '../../lib/storage/types';
 import { CORRECTION_MODES } from '../../lib/correction/modes';
@@ -12,6 +27,14 @@ import { MistakeExplainer } from './MistakeExplainer';
 import { computeTextStats } from '../../lib/utils/text-stats';
 import { computeWritingScore } from '../../lib/utils/writing-score';
 import { computeChangeMetrics } from '../../lib/utils/confidence';
+
+const MODE_TABS: { id: CorrectionMode; label: string; icon: React.ReactNode }[] = [
+  { id: 'grammar_only', label: 'Grammar', icon: <CheckCheck size={12} /> },
+  { id: 'professional', label: 'Pro', icon: <Briefcase size={12} /> },
+  { id: 'academic', label: 'Academic', icon: <GraduationCap size={12} /> },
+  { id: 'concise', label: 'Concise', icon: <Minimize2 size={12} /> },
+  { id: 'humanize', label: 'Humanize', icon: <MessageSquareQuote size={12} /> },
+];
 
 interface InlinePopupProps {
   originalText: string;
@@ -45,8 +68,7 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
 
   const themeColors = getThemeColors(themeMode);
 
-  // Position calculation to guarantee popup stays 100% inside viewport bounds
-  const POPUP_HEIGHT = 480;
+  const POPUP_HEIGHT = 460;
   const POPUP_WIDTH = 420;
 
   let top = rect.bottom + 10;
@@ -74,7 +96,7 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
       });
 
       if (response.metadata?.requiresKey) {
-        setRequiresKeyMsg(response.metadata.message as string || 'An AI API Key is required for this mode.');
+        setRequiresKeyMsg((response.metadata.message as string) || 'An AI API Key is required for this mode.');
         setCorrectedText(originalText);
       } else {
         setCorrectedText(response.corrected);
@@ -140,9 +162,9 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
         zIndex: 2147483647,
         backgroundColor: themeColors.cardBg,
         borderRadius: '16px',
-        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.7)',
+        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(99, 102, 241, 0.3)',
         border: `1px solid ${themeColors.border}`,
-        fontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
         color: themeColors.textPrimary,
         display: 'flex',
         flexDirection: 'column',
@@ -156,7 +178,7 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '12px 16px',
+          padding: '10px 14px',
           borderBottom: `1px solid ${themeColors.border}`,
           backgroundColor: themeColors.bgSecondary,
           flexShrink: 0,
@@ -166,24 +188,25 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
           <img
             src={chrome.runtime?.getURL ? chrome.runtime.getURL('icon-32.png') : '/icon-32.png'}
             alt="WriteFix"
-            style={{ width: '20px', height: '20px', borderRadius: '4px' }}
-            onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+            style={{ width: '20px', height: '20px', borderRadius: '5px' }}
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = 'none';
+            }}
           />
-          <span style={{ fontFamily: 'Fraunces, Georgia, serif', fontWeight: 600, fontSize: '15px', color: '#ECE8DE' }}>
-            WriteFix
+          <span style={{ fontWeight: 700, fontSize: '13.5px', color: '#f9fafb', letterSpacing: '-0.01em' }}>
+            WriteFix AI
           </span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span
             style={{
-              fontFamily: '"IBM Plex Mono", monospace',
               fontSize: '11px',
               padding: '2px 8px',
-              borderRadius: '4px',
-              backgroundColor: 'rgba(176, 141, 79, 0.12)',
-              border: '1px solid rgba(176, 141, 79, 0.3)',
-              color: '#B08D4F',
+              borderRadius: '6px',
+              backgroundColor: 'rgba(99, 102, 241, 0.16)',
+              border: '1px solid rgba(99, 102, 241, 0.35)',
+              color: '#818cf8',
               fontWeight: 600,
             }}
           >
@@ -201,8 +224,9 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
               display: 'flex',
               alignItems: 'center',
             }}
+            title="Close"
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
       </div>
@@ -212,16 +236,15 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
         style={{
           display: 'flex',
           gap: '4px',
-          padding: '8px 12px',
+          padding: '6px 10px',
           overflowX: 'auto',
           borderBottom: `1px solid ${themeColors.border}`,
-          backgroundColor: themeColors.bgTertiary,
+          backgroundColor: themeColors.bgSecondary,
           flexShrink: 0,
           scrollbarWidth: 'none',
-          msOverflowStyle: 'none',
         }}
       >
-        {Object.values(CORRECTION_MODES).map((mode) => {
+        {MODE_TABS.map((mode) => {
           const isActive = mode.id === activeMode;
 
           return (
@@ -229,19 +252,23 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
               key={mode.id}
               onClick={() => setActiveMode(mode.id)}
               style={{
-                padding: '5px 10px',
+                padding: '5px 9px',
                 borderRadius: '6px',
-                border: isActive ? '1px solid #8A6E3E' : '1px solid transparent',
-                backgroundColor: isActive ? '#B08D4F' : 'transparent',
-                color: isActive ? '#15171B' : themeColors.textSecondary,
+                border: isActive ? '1px solid #818cf8' : '1px solid transparent',
+                backgroundColor: isActive ? 'rgba(99, 102, 241, 0.18)' : 'transparent',
+                color: isActive ? '#818cf8' : themeColors.textSecondary,
                 fontWeight: isActive ? 600 : 500,
-                fontSize: '12px',
+                fontSize: '11.5px',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
                 transition: 'all 0.15s ease',
               }}
             >
-              {mode.shortLabel}
+              {mode.icon}
+              <span>{mode.label}</span>
             </button>
           );
         })}
@@ -251,51 +278,82 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
       <div
         onWheel={(e) => e.stopPropagation()}
         style={{
-          padding: '16px',
+          padding: '14px',
           overflowY: 'auto',
           flex: 1,
-          maxHeight: '360px',
+          maxHeight: '340px',
           overscrollBehavior: 'contain',
         }}
       >
         {loading ? (
           <div style={{ padding: '24px', textAlign: 'center', color: themeColors.textSecondary, fontSize: '13px' }}>
-            <div style={{ display: 'inline-block', width: '20px', height: '20px', border: '2px solid #B08D4F', borderTopColor: 'transparent', borderRadius: '50%', animation: 'wf-spin 0.6s linear infinite', marginBottom: '8px' }} />
-            <div>Refining writing with WriteFix...</div>
+            <div
+              style={{
+                display: 'inline-block',
+                width: '20px',
+                height: '20px',
+                border: '2px solid #818cf8',
+                borderTopColor: 'transparent',
+                borderRadius: '50%',
+                animation: 'wf-spin 0.6s linear infinite',
+                marginBottom: '8px',
+              }}
+            />
+            <div>Polishing text with WriteFix AI...</div>
           </div>
         ) : requiresKeyMsg ? (
-          <div style={{ padding: '20px', backgroundColor: 'rgba(176, 141, 79, 0.08)', border: '1px solid rgba(176, 141, 79, 0.25)', borderRadius: '10px', textAlign: 'center' }}>
+          <div
+            style={{
+              padding: '18px',
+              backgroundColor: 'rgba(99, 102, 241, 0.08)',
+              border: '1px solid rgba(99, 102, 241, 0.25)',
+              borderRadius: '10px',
+              textAlign: 'center',
+            }}
+          >
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
-              <Lock size={24} color="#B08D4F" />
+              <Lock size={22} color="#818cf8" />
             </div>
-            <div style={{ fontWeight: 600, color: '#ECE8DE', fontSize: '14px', marginBottom: '6px' }}>
-              AI Mode Requires API Key
+            <div style={{ fontWeight: 600, color: '#f9fafb', fontSize: '13.5px', marginBottom: '4px' }}>
+              AI Mode Requires Free API Key
             </div>
-            <div style={{ fontSize: '12px', color: '#8B8F96', marginBottom: '14px', lineHeight: '1.5' }}>
-              The <strong>"{CORRECTION_MODES[activeMode]?.label}"</strong> mode uses AI rewrites. Add a free Groq (Llama 3.3 70B) or Gemini API key in WriteFix options to unlock all AI modes.
+            <div style={{ fontSize: '12px', color: themeColors.textSecondary, marginBottom: '14px', lineHeight: '1.5' }}>
+              Add a free Groq or Gemini key in WriteFix options to unlock all rewrites.
             </div>
             <button
               onClick={openSettings}
               style={{
-                backgroundColor: '#B08D4F',
-                color: '#15171B',
+                backgroundColor: '#6366f1',
+                color: '#ffffff',
                 border: 'none',
-                padding: '8px 16px',
+                padding: '7px 14px',
                 borderRadius: '6px',
                 fontWeight: 600,
-                fontSize: '13px',
+                fontSize: '12px',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',
               }}
             >
-              <Settings size={14} /> Open Extension Options
+              <Settings size={13} /> Open Extension Options
             </button>
           </div>
         ) : error ? (
-          <div style={{ padding: '16px', backgroundColor: 'rgba(190, 91, 61, 0.12)', color: '#BE5B3D', border: '1px solid rgba(190, 91, 61, 0.3)', borderRadius: '8px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertCircle size={16} /> {error}
+          <div
+            style={{
+              padding: '12px',
+              backgroundColor: 'rgba(244, 63, 94, 0.15)',
+              color: '#fb7185',
+              border: '1px solid rgba(244, 63, 94, 0.35)',
+              borderRadius: '8px',
+              fontSize: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <AlertCircle size={15} /> {error}
           </div>
         ) : (
           <>
@@ -303,12 +361,20 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
             <DiffView originalText={originalText} correctedText={correctedText} themeMode={themeMode} />
 
             {/* Stats Bar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '11px', color: themeColors.textSecondary, fontFamily: '"IBM Plex Mono", monospace' }}>
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginTop: '10px',
+                fontSize: '11px',
+                color: themeColors.textMuted,
+              }}
+            >
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <BarChart2 size={12} color="#B08D4F" /> {afterStats.wordCount} words · {afterStats.readingLevel}
+                <BarChart2 size={12} color="#818cf8" /> {afterStats.wordCount} words · {afterStats.readingLevel}
               </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                <RefreshCw size={12} color="#7A9471" /> {changePercent}% change
+                <RefreshCw size={12} color="#34d399" /> {changePercent}% improved
               </span>
             </div>
 
@@ -318,13 +384,13 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
         )}
       </div>
 
-      {/* Action Footer (Always Visible at Bottom) */}
+      {/* Action Footer */}
       <div
         style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '12px 16px',
+          padding: '10px 14px',
           borderTop: `1px solid ${themeColors.border}`,
           backgroundColor: themeColors.bgSecondary,
           flexShrink: 0,
@@ -336,22 +402,23 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
           style={{
             flex: 1,
             marginRight: '8px',
-            backgroundColor: '#B08D4F',
-            color: '#15171B',
+            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+            color: '#ffffff',
             border: 'none',
-            padding: '8px 16px',
+            padding: '8px 14px',
             borderRadius: '6px',
-            fontWeight: 700,
-            fontSize: '13px',
-            cursor: (loading || requiresKeyMsg) ? 'not-allowed' : 'pointer',
-            opacity: (loading || requiresKeyMsg) ? 0.5 : 1,
+            fontWeight: 600,
+            fontSize: '12.5px',
+            cursor: loading || requiresKeyMsg ? 'not-allowed' : 'pointer',
+            opacity: loading || requiresKeyMsg ? 0.5 : 1,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
             gap: '6px',
+            boxShadow: '0 2px 8px rgba(99, 102, 241, 0.35)',
           }}
         >
-          <Check size={15} /> Replace
+          <Sparkles size={14} /> Replace
         </button>
 
         <button
@@ -364,14 +431,14 @@ export const InlinePopup: React.FC<InlinePopupProps> = ({
             padding: '8px 12px',
             borderRadius: '6px',
             fontWeight: 500,
-            fontSize: '13px',
+            fontSize: '12px',
             cursor: 'pointer',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '5px',
           }}
         >
-          {isCopied ? <Check size={14} color="#7A9471" /> : <Copy size={14} />}
+          {isCopied ? <Check size={13} color="#34d399" /> : <Copy size={13} />}
           {isCopied ? 'Copied' : 'Copy'}
         </button>
       </div>

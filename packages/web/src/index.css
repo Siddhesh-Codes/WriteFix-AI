@@ -394,6 +394,13 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 @media (max-width: 1023px) {
+  html, body, #root, .app-root {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    overflow-x: hidden !important;
+  }
+
   .studio-container {
     height: auto;
     min-height: calc(100vh - 58px);
@@ -407,7 +414,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
   .studio-pane {
     height: auto;
-    min-height: 320px;
+    min-height: 280px;
     overflow: visible;
   }
 }

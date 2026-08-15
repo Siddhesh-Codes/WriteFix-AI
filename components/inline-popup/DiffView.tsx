@@ -13,32 +13,34 @@ export const DiffView: React.FC<DiffViewProps> = ({ originalText, correctedText,
   const themeColors = getThemeColors(themeMode);
 
   return (
-    <div style={{
-      fontFamily: '"IBM Plex Sans", system-ui, -apple-system, sans-serif',
-      fontSize: '13.5px',
-      lineHeight: '1.6',
-      padding: '14px',
-      borderRadius: '8px',
-      backgroundColor: themeColors.bgTertiary,
-      color: themeColors.textPrimary,
-      border: `1px solid ${themeColors.border}`,
-      wordBreak: 'break-word',
-      whiteSpace: 'pre-wrap',
-      maxHeight: '220px',
-      overflowY: 'auto'
-    }}>
+    <div
+      style={{
+        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+        fontSize: '13px',
+        lineHeight: '1.6',
+        padding: '12px 14px',
+        borderRadius: '10px',
+        backgroundColor: themeColors.bgTertiary,
+        color: themeColors.textPrimary,
+        border: `1px solid ${themeColors.border}`,
+        wordBreak: 'break-word',
+        whiteSpace: 'pre-wrap',
+        maxHeight: '220px',
+        overflowY: 'auto',
+      }}
+    >
       {segments.map((seg, idx) => {
         if (seg.type === 'remove') {
           return (
             <span
               key={idx}
               style={{
-                backgroundColor: 'rgba(190, 91, 61, 0.18)',
-                color: '#BE5B3D',
+                backgroundColor: 'rgba(244, 63, 94, 0.2)',
+                color: '#fb7185',
                 textDecoration: 'line-through',
-                padding: '2px 4px',
+                padding: '1px 4px',
                 borderRadius: '3px',
-                margin: '0 1px'
+                margin: '0 1px',
               }}
             >
               {seg.value}
@@ -50,12 +52,12 @@ export const DiffView: React.FC<DiffViewProps> = ({ originalText, correctedText,
             <span
               key={idx}
               style={{
-                backgroundColor: 'rgba(122, 148, 113, 0.18)',
-                color: '#7A9471',
+                backgroundColor: 'rgba(16, 185, 129, 0.22)',
+                color: '#34d399',
                 fontWeight: 600,
-                padding: '2px 4px',
+                padding: '1px 4px',
                 borderRadius: '3px',
-                margin: '0 1px'
+                margin: '0 1px',
               }}
             >
               {seg.value}

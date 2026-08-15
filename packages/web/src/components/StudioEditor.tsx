@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   CANONICAL_PRIMARY_MODES,
   CANONICAL_TONE_MODIFIERS,
@@ -32,6 +32,7 @@ import {
   Check,
   AlertCircle,
   SlidersHorizontal,
+  ChevronDown,
 } from 'lucide-react';
 
 const PRIMARY_ICONS: Record<string, React.ReactNode> = {
@@ -65,9 +66,35 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
   onHistoryUpdated,
   restoredText,
 }) => {
-  const [inputText, setInputText] = useState<string>(
-    'The paper discusses about how machine learning algorythms can help in predicting student performance. Many researchers has shown that early warning systems is very helpful for prevent dropout rates in universities.'
-  );
+  const [inputText, setInputText] = useState<string>('');
+  const [isMobile, setIsMobile] = useState<boolean>(() => typeof window !== 'undefined' && window.innerWidth < 768);
+  const [toneDropdownOpen, setToneDropdownOpen] = useState<boolean>(false);
+  const [modeDropdownOpen, setModeDropdownOpen] = useState<boolean>(false);
+  const toneDropdownRef = useRef<HTMLDivElement | null>(null);
+  const modeDropdownRef = useRef<HTMLDivElement | null>(null);
+
+  // Track viewport width for responsive tone selector
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    if (!toneDropdownOpen && !modeDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (toneDropdownOpen && toneDropdownRef.current && !toneDropdownRef.current.contains(e.target as Node)) {
+        setToneDropdownOpen(false);
+      }
+      if (modeDropdownOpen && modeDropdownRef.current && !modeDropdownRef.current.contains(e.target as Node)) {
+        setModeDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [toneDropdownOpen, modeDropdownOpen]);
   const [activeMode, setActiveMode] = useState<CorrectionMode>('grammar');
   const [activeTone, setActiveTone] = useState<CorrectionMode | null>(null);
   const [correctedText, setCorrectedText] = useState<string>('');
@@ -231,183 +258,439 @@ export const StudioEditor: React.FC<StudioEditorProps> = ({
           flexShrink: 0,
         }}
       >
-        {/* Row 1: Primary Rewrite Modes (5 Max) */}
-        <div
-          className="premium-card touch-scroll-x"
-          style={{
-            padding: '4px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-lg)',
-          }}
-        >
-          {CANONICAL_PRIMARY_MODES.map((mode) => {
-            const isSelected = activeMode === mode.id;
-            return (
-              <button
-                key={mode.id}
-                onClick={() => setActiveMode(mode.id)}
-                title={mode.description}
-                style={{
-                  flex: '1 0 auto',
-                  minWidth: '110px',
-                  minHeight: '38px',
-                  padding: '7px 14px',
-                  borderRadius: 'var(--radius-md)',
-                  border: isSelected ? '1px solid var(--color-signet-dim)' : '1px solid transparent',
-                  backgroundColor: isSelected ? 'var(--bg-surface-elevated)' : 'transparent',
-                  color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
-                  boxShadow: isSelected ? 'var(--shadow-sm)' : 'none',
-                  fontSize: '12.5px',
-                  fontWeight: isSelected ? 600 : 500,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '7px',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                  whiteSpace: 'nowrap',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.color = 'var(--text-primary)';
-                    e.currentTarget.style.backgroundColor = 'var(--bg-surface-elevated)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isSelected) {
-                    e.currentTarget.style.color = 'var(--text-secondary)';
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
-                }}
-              >
-                <span style={{ color: isSelected ? 'var(--color-signet)' : 'var(--text-muted)' }}>
-                  {PRIMARY_ICONS[mode.id]}
-                </span>
-                <span>{mode.label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Row 2: Secondary Tone Refinements (Modifiers) */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '2px 4px',
-            overflowX: 'auto',
-            width: '100%',
-            maxWidth: '100%',
-            boxSizing: 'border-box',
-          }}
-          className="touch-scroll-x"
-        >
+        {/* Row 1: Primary Rewrite Modes — Dropdown on mobile, pills on desktop */}
+        {isMobile ? (
+          /* Mobile: Custom styled dropdown for primary modes */
           <div
+            ref={modeDropdownRef}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
-              fontFamily: 'var(--font-mono)',
-              fontSize: '10.5px',
-              fontWeight: 500,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-              color: 'var(--text-muted)',
-              paddingRight: '6px',
-              flexShrink: 0,
+              position: 'relative',
+              width: '100%',
+              boxSizing: 'border-box',
             }}
           >
-            <SlidersHorizontal size={11} color="var(--color-signet)" />
-            <span>Tone Modifier:</span>
-          </div>
+            <button
+              onClick={() => setModeDropdownOpen((v) => !v)}
+              className="premium-card"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+                padding: '10px 14px',
+                minHeight: '44px',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-surface)',
+                color: 'var(--text-primary)',
+                fontSize: '13.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: 'var(--color-signet)' }}>{PRIMARY_ICONS[activeMode]}</span>
+                <span>{CANONICAL_PRIMARY_MODES.find((m) => m.id === activeMode)?.label || 'Grammar'}</span>
+              </div>
+              <ChevronDown
+                size={14}
+                style={{
+                  transition: 'transform 0.2s ease',
+                  transform: modeDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  color: 'var(--text-muted)',
+                }}
+              />
+            </button>
 
+            {modeDropdownOpen && (
+              <div
+                className="animate-fade-in"
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-strong)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 100,
+                  overflow: 'hidden',
+                }}
+              >
+                {CANONICAL_PRIMARY_MODES.map((mode) => {
+                  const isSelected = activeMode === mode.id;
+                  return (
+                    <button
+                      key={mode.id}
+                      onClick={() => { setActiveMode(mode.id); setModeDropdownOpen(false); }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '12px 14px',
+                        border: 'none',
+                        backgroundColor: isSelected ? 'var(--primary-subtle)' : 'transparent',
+                        color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        fontSize: '13px',
+                        fontWeight: isSelected ? 600 : 400,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        borderBottom: '1px solid var(--border-subtle)',
+                        transition: 'background-color 0.1s ease',
+                      }}
+                    >
+                      <span style={{ color: isSelected ? 'var(--color-signet)' : 'var(--text-muted)', width: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {PRIMARY_ICONS[mode.id]}
+                      </span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: isSelected ? 600 : 500 }}>{mode.label}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{mode.description}</div>
+                      </div>
+                      {isSelected && <span style={{ color: 'var(--color-signet)', fontSize: '13px' }}>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Desktop: Horizontal pill bar */
           <div
+            className="premium-card touch-scroll-x"
             style={{
+              padding: '4px',
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
-              flex: 1,
-              minWidth: 0,
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-lg)',
             }}
           >
-            {/* "None" reset button */}
-            <button
-              onClick={() => setActiveTone(null)}
-              style={{
-                padding: '6px 12px',
-                minHeight: '34px',
-                borderRadius: 'var(--radius-sm)',
-                border: !activeTone ? '1px solid var(--color-signet-dim)' : '1px solid var(--border-subtle)',
-                backgroundColor: !activeTone ? 'var(--primary-subtle)' : 'var(--bg-surface)',
-                color: !activeTone ? 'var(--color-signet)' : 'var(--text-muted)',
-                fontSize: '11.5px',
-                fontWeight: !activeTone ? 600 : 400,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-                whiteSpace: 'nowrap',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              Default (Mode Native)
-            </button>
-
-            {CANONICAL_TONE_MODIFIERS.map((tone) => {
-              const isToneActive = activeTone === tone.id;
+            {CANONICAL_PRIMARY_MODES.map((mode) => {
+              const isSelected = activeMode === mode.id;
               return (
                 <button
-                  key={tone.id}
-                  onClick={() => setActiveTone(tone.id)}
-                  title={tone.description}
+                  key={mode.id}
+                  onClick={() => setActiveMode(mode.id)}
+                  title={mode.description}
                   style={{
+                    flex: '1 0 auto',
+                    minWidth: '110px',
+                    minHeight: '38px',
+                    padding: '7px 14px',
+                    borderRadius: 'var(--radius-md)',
+                    border: isSelected ? '1px solid var(--color-signet-dim)' : '1px solid transparent',
+                    backgroundColor: isSelected ? 'var(--bg-surface-elevated)' : 'transparent',
+                    color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
+                    boxShadow: isSelected ? 'var(--shadow-sm)' : 'none',
+                    fontSize: '12.5px',
+                    fontWeight: isSelected ? 600 : 500,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '6px',
-                    padding: '6px 12px',
-                    minHeight: '34px',
-                    borderRadius: 'var(--radius-sm)',
-                    border: isToneActive
-                      ? '1px solid var(--color-signet)'
-                      : '1px solid var(--border-subtle)',
-                    backgroundColor: isToneActive ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
-                    color: isToneActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-                    fontSize: '11.5px',
-                    fontWeight: isToneActive ? 600 : 400,
+                    gap: '7px',
                     cursor: 'pointer',
                     transition: 'all 0.15s ease',
                     whiteSpace: 'nowrap',
-                    flexShrink: 0,
                   }}
                   onMouseEnter={(e) => {
-                    if (!isToneActive) {
-                      e.currentTarget.style.borderColor = 'var(--border-strong)';
+                    if (!isSelected) {
                       e.currentTarget.style.color = 'var(--text-primary)';
+                      e.currentTarget.style.backgroundColor = 'var(--bg-surface-elevated)';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!isToneActive) {
-                      e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                    if (!isSelected) {
                       e.currentTarget.style.color = 'var(--text-secondary)';
+                      e.currentTarget.style.backgroundColor = 'transparent';
                     }
                   }}
                 >
-                  <span style={{ color: isToneActive ? 'var(--color-signet)' : 'var(--text-muted)' }}>
-                    {TONE_ICONS[tone.id]}
+                  <span style={{ color: isSelected ? 'var(--color-signet)' : 'var(--text-muted)' }}>
+                    {PRIMARY_ICONS[mode.id]}
                   </span>
-                  <span>{tone.label}</span>
+                  <span>{mode.label}</span>
                 </button>
               );
             })}
           </div>
-        </div>
+        )}
+
+        {/* Row 2: Secondary Tone Refinements — Dropdown on mobile, pills on desktop */}
+        {isMobile ? (
+          /* Mobile: Custom styled dropdown */
+          <div
+            ref={toneDropdownRef}
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '2px 4px',
+              width: '100%',
+              boxSizing: 'border-box',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10.5px',
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: 'var(--text-muted)',
+                flexShrink: 0,
+              }}
+            >
+              <SlidersHorizontal size={11} color="var(--color-signet)" />
+              <span>Tone:</span>
+            </div>
+
+            {/* Dropdown trigger button */}
+            <button
+              onClick={() => setToneDropdownOpen((v) => !v)}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+                padding: '8px 12px',
+                minHeight: '40px',
+                borderRadius: 'var(--radius-md)',
+                border: activeTone ? '1px solid var(--color-signet-dim)' : '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-surface)',
+                color: activeTone ? 'var(--text-primary)' : 'var(--text-muted)',
+                fontSize: '13px',
+                fontWeight: 500,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {activeTone && TONE_ICONS[activeTone] && (
+                  <span style={{ color: 'var(--color-signet)' }}>{TONE_ICONS[activeTone]}</span>
+                )}
+                <span>
+                  {activeTone
+                    ? CANONICAL_TONE_MODIFIERS.find((t) => t.id === activeTone)?.label || 'Default'
+                    : 'Default (None)'}
+                </span>
+              </div>
+              <ChevronDown
+                size={14}
+                style={{
+                  transition: 'transform 0.2s ease',
+                  transform: toneDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  color: 'var(--text-muted)',
+                }}
+              />
+            </button>
+
+            {/* Dropdown panel */}
+            {toneDropdownOpen && (
+              <div
+                className="animate-fade-in"
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  right: 0,
+                  marginTop: '4px',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-strong)',
+                  borderRadius: 'var(--radius-lg)',
+                  boxShadow: 'var(--shadow-lg)',
+                  zIndex: 100,
+                  overflow: 'hidden',
+                }}
+              >
+                {/* Default / None option */}
+                <button
+                  onClick={() => { setActiveTone(null); setToneDropdownOpen(false); }}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '12px 14px',
+                    border: 'none',
+                    backgroundColor: !activeTone ? 'var(--primary-subtle)' : 'transparent',
+                    color: !activeTone ? 'var(--color-signet)' : 'var(--text-secondary)',
+                    fontSize: '13px',
+                    fontWeight: !activeTone ? 600 : 400,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    borderBottom: '1px solid var(--border-subtle)',
+                    transition: 'background-color 0.1s ease',
+                  }}
+                >
+                  <span style={{ width: '16px', textAlign: 'center' }}>{!activeTone ? '✓' : ''}</span>
+                  <span>Default (None)</span>
+                </button>
+
+                {CANONICAL_TONE_MODIFIERS.map((tone) => {
+                  const isToneActive = activeTone === tone.id;
+                  return (
+                    <button
+                      key={tone.id}
+                      onClick={() => { setActiveTone(tone.id); setToneDropdownOpen(false); }}
+                      style={{
+                        width: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '12px 14px',
+                        border: 'none',
+                        backgroundColor: isToneActive ? 'var(--primary-subtle)' : 'transparent',
+                        color: isToneActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                        fontSize: '13px',
+                        fontWeight: isToneActive ? 600 : 400,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        borderBottom: '1px solid var(--border-subtle)',
+                        transition: 'background-color 0.1s ease',
+                      }}
+                    >
+                      <span style={{ color: isToneActive ? 'var(--color-signet)' : 'var(--text-muted)', width: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {TONE_ICONS[tone.id]}
+                      </span>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: isToneActive ? 600 : 500 }}>{tone.label}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{tone.description}</div>
+                      </div>
+                      {isToneActive && <span style={{ color: 'var(--color-signet)', fontSize: '13px' }}>✓</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Desktop: Horizontal pill bar */
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '2px 4px',
+              overflowX: 'auto',
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
+            }}
+            className="touch-scroll-x"
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '10.5px',
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '0.06em',
+                color: 'var(--text-muted)',
+                paddingRight: '6px',
+                flexShrink: 0,
+              }}
+            >
+              <SlidersHorizontal size={11} color="var(--color-signet)" />
+              <span>Tone Modifier:</span>
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              <button
+                onClick={() => setActiveTone(null)}
+                style={{
+                  padding: '6px 12px',
+                  minHeight: '34px',
+                  borderRadius: 'var(--radius-sm)',
+                  border: !activeTone ? '1px solid var(--color-signet-dim)' : '1px solid var(--border-subtle)',
+                  backgroundColor: !activeTone ? 'var(--primary-subtle)' : 'var(--bg-surface)',
+                  color: !activeTone ? 'var(--color-signet)' : 'var(--text-muted)',
+                  fontSize: '11.5px',
+                  fontWeight: !activeTone ? 600 : 400,
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                Default (Mode Native)
+              </button>
+
+              {CANONICAL_TONE_MODIFIERS.map((tone) => {
+                const isToneActive = activeTone === tone.id;
+                return (
+                  <button
+                    key={tone.id}
+                    onClick={() => setActiveTone(tone.id)}
+                    title={tone.description}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '6px 12px',
+                      minHeight: '34px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: isToneActive
+                        ? '1px solid var(--color-signet)'
+                        : '1px solid var(--border-subtle)',
+                      backgroundColor: isToneActive ? 'var(--bg-surface-elevated)' : 'var(--bg-surface)',
+                      color: isToneActive ? 'var(--text-primary)' : 'var(--text-secondary)',
+                      fontSize: '11.5px',
+                      fontWeight: isToneActive ? 600 : 400,
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isToneActive) {
+                        e.currentTarget.style.borderColor = 'var(--border-strong)';
+                        e.currentTarget.style.color = 'var(--text-primary)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isToneActive) {
+                        e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                      }
+                    }}
+                  >
+                    <span style={{ color: isToneActive ? 'var(--color-signet)' : 'var(--text-muted)' }}>
+                      {TONE_ICONS[tone.id]}
+                    </span>
+                    <span>{tone.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Dual Pane Studio Grid */}
